@@ -1,0 +1,17 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Check if user wants to schedule cleaning.
+db_input medium media-cleaner/want_scheduling || true
+db_go
+
+# Check the answer.
+db_get media-cleaner/want_scheduling
+if [ "$RET" = "true" ]; then
+    # Promt the user fo additional scheduling information.
+    db_input high media-cleaner/config_path || true
+    db_input high media-cleaner/scheduling_interval || true
+    db_go
+fi

@@ -1,0 +1,31 @@
+Source: media-cleaner
+Section: python
+Priority: optional
+Maintainer: Johan Wermensjö, <johanwermensjoe@gmail.com>
+Build-Depends: debhelper (>= 9),
+               debconf,
+               po-debconf,
+               python (>= 2.7)
+Standards-Version: 3.9.5
+X-Python-Version: >= 2.7
+
+Package: media-cleaner
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends},
+         python (>= 2.7),
+         logrotate,
+         media-cleaner-rarfile (= ${source:Version})
+Description: python script to clean and sort media files
+ The script will clean up and format the names of movies and
+ tv-series files into predetermined formats and folder structure. 
+ The script accepts most name formats and will separate extra 
+ material and soundtracks.
+
+Package: media-cleaner-rarfile
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends},
+         python (>= 2.7),
+         unrar
+Description: RAR archive reader for Python
+ This is Python module for RAR archive reading.
+ The interface is made as zipfile like as possible.

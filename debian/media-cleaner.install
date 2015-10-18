@@ -1,0 +1,3 @@
+media-cleaner/media_cleaner.py usr/lib/media-cleaner
+media-cleaner/media_tools.py usr/lib/media-cleaner
+media-cleaner/deluge_tools.py usr/lib/media-cleaner

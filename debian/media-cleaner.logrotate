@@ -1,0 +1,7 @@
+/var/log/media-cleaner/media-cleaner.log {
+    rotate 5
+    weekly
+    compress
+    delaycompress
+    create
+}

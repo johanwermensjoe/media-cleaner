@@ -1,0 +1,29 @@
+Template: media-cleaner/want_scheduling
+Type: boolean
+_Description: Do you want to setup scheduled cleaning?
+ A scheduled task can be created to run in the background
+ and periodically clean the media files without user interaction.
+ .
+ IMPORTANT: This will require a config file to specify paths.
+
+Template: media-cleaner/config_path
+Type: string
+_Description: Path of the config file:
+ The config file is used to provide a singular access point
+ for all media paths and library locations. It should be a YAML
+ file (.yml) and be formatted as follows:
+ .
+ path:
+   tv: <your path to the tv-serie root folder>
+   tv: <your path to the movie root folder>
+ .
+ The structure in the tv-serie root folder is expected to follow:
+   <root folder>/<tv-serie name>/*
+ The struecture in the move root folder can be arbitrary.
+
+Template: media-cleaner/scheduling_interval
+Type: select
+__Choices: 1h, 2h, 5h, 1d
+Default: 1h
+_Description: The interval at which to schedule the cleaning:
+ The interval is used in a cron job.

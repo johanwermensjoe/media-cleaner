@@ -1,0 +1,32 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Check whether the cleaning should be scheduled.
+db_get media-cleaner/want_scheduling
+if [ "$RET" = "true" ]; then
+    db_get media-cleaner/config_path
+    configPath=$RET
+        
+    # Install cronjob with the correct interval.    
+    db_get media-cleaner/scheduling_interval
+    if [ "$RET" = "1h" ]; then
+        schedulingInterval="@hourly"
+    elif [ "$RET" = "2h" ]; then
+        schedulingInterval="0 */2 * * *"
+    elif [ "$RET" = "5h" ]; then
+        schedulingInterval="0 */5 * * *"
+    elif [ "$RET" = "1d" ]; then
+        schedulingInterval="@daily"
+    fi
+
+    echo "$schedulingInterval $(logname) /usr/bin/media-cleaner $configPath >> /var/log/media-cleaner/media-cleaner.log 2>&1" > /etc/cron.d/media-cleaner
+fi
+
+# Give sufficient premissions for log storage.
+chmod 777 /var/log/media-cleaner
+
+#DEBHELPER#
+
+exit 0
