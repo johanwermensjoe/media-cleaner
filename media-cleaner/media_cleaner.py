@@ -1,11 +1,14 @@
+#!/usr/bin/env python
+
 import os
 import media_tools
 import sys
 import argparse
+import time
 
 __version__ = "1.0.0"
 
-def clean_movies(rootDir, flags):
+def clean_movie(rootDir, flags):
     # Setup a new operation counter for tv-series cleaning.
     # Extract and clean any archives.
     opCounter = media_tools.extract_and_clean_archives(rootDir, flags)
@@ -121,36 +124,73 @@ def clean():
     flags = {'safemode':args.safemode, 'verbose':args.verbose}
 
     # Clean what was specified.
-    if args.movies:
-        # Get path from yaml file
-        rootDir = media_tools.get_value_from_yaml(args.settingsfile, "path", "movie")
+    if args.movie:
+        # Find the library path.
+        if args.movie_dir:
+            rootDir = args.movie_dir     
+        else:
+            # Get path from yaml file.
+            rootDir = media_tools.get_value_from_yaml(args.config, "path", "movie")
         print "Running movie cleanup script on: " + rootDir  
-        clean_movies(rootDir, flags)
+        clean_movie(rootDir, flags)
         
     if args.tv:
-        # Get path from yaml file
-        rootDir = media_tools.get_value_from_yaml(args.settingsfile, "path", "tv")
+        # Find the library path.
+        if args.tv_dir:
+            rootDir = args.tv_dir  
+        else:
+            # Get path from yaml file.
+            rootDir = media_tools.get_value_from_yaml(args.config, "path", "tv")
         print "Running tv-serie cleanup script on: " + rootDir
         clean_tv(rootDir, flags)
     
+    # Check if in cron-mode and write extra log info.
+    if args.cron:
+        print "------------------------------------------------\n"
 
 # Start
 parser = argparse.ArgumentParser(description='Cleans and renames media files.')
 
+parser.add_argument('--version', '-V', action='store_true', \
+    help='shows the version')
 parser.add_argument('--safemode', '-s', action='store_true', \
     help='disables any file changes')
 parser.add_argument('--verbose', '-v', action='store_true', \
-    help='disables any file changes')
+    help='enables verbose mode')
+parser.add_argument('--cron', '-c', action='store_true', \
+    help='enables cron mode with extra log output')
 parser.add_argument('--force', '-f', action='store_true', \
     help='force clean and ignore torrent activity')
 parser.add_argument('--tv', '-t', action='store_true', \
     help='clean tv-series directory' )
-parser.add_argument('--movies', '-m', action='store_true', \
+parser.add_argument('--movie', '-m', action='store_true', \
     help='clean movie directory')
-parser.add_argument('settingsfile', \
+parser.add_argument('--movie-dir', \
+    help='path to movie directory')
+parser.add_argument('--tv-dir', \
+    help='path to tv-series directory')
+parser.add_argument('--config', \
     help='path to the yaml file containing media paths')
     
 args = parser.parse_args()
+
+# Check path args.
+if args.tv and not args.tv_dir and not args.config:
+    print "No path set for tv library, see --tv-dir or --config"
+    quit()
+if args.movie and not args.movie_dir and not args.config:
+    print "No path set for movie library, see --movie-dir or --config"
+    quit()
+
+# Check if in cron-mode and write extra log info.
+if args.version:
+    print __version__
+    quit()
+
+# Check if in cron-mode and write extra log info.
+if args.cron:
+    print "Running cleanup: " + time.strftime("%a %Y-%m-%d %H:%M:%S")
+    print "------------------------------------------------\n"
 
 # Check if torrent activity should be ignored.
 if args.force:

@@ -4,7 +4,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH MEDIA-CLEANER 1 "October 17, 2015"
+.TH MEDIA-CLEANER 1 "October 26, 2015"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -21,7 +21,10 @@
 media-cleaner \- cleans and sorts media files
 .SH SYNOPSIS
 .B media-cleaner
-.RI [ options ] " configfile"
+.RI [ options ]
+[\fB\-movie-dir\fR \fIMOVIE_DIR\fR]
+[\fB\-\-tv-dir\fR \fITV_DIR\fR]
+[\fB\-\-config\fR \fICONFIG\fR]
 .SH DESCRIPTION
 This manual page documents briefly the
 .B media-cleaner
@@ -44,5 +47,32 @@ For a complete description, see the Info files.
 .B \-h, \-\-help
 Show summary of options.
 .TP
-.B \-v, \-\-version
+.B \-V, \-\-version
 Show version of program.
+.TP
+.B \-s, \-\-safemode
+Disables any file changes.
+.TP
+.B \-v, \-\-verbose
+Enables verbose mode.
+.TP
+.B \-c, \-\-cron
+Enables cron mode with extra log output.
+.TP
+.B \-f, \-\-force
+Force clean and ignore torrent activity.
+.TP
+.B \-t, \-\-tv
+Clean tv-series directory,
+.TP
+.B \-m, \-\-movie
+Clean movie directory.
+.TP
+.B \-\-movie-dir =\fIMOVIE_DIR\fR
+Path to movie directory.
+.TP
+.B \-\-tv-dir =\fITV_DIR\fR
+Path to tv-series directory.
+.TP
+.B \-\-config =\fICONFIG\fR
+Path to the yaml file containing media paths.
