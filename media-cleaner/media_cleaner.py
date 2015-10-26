@@ -189,8 +189,8 @@ if args.version:
 
 # Check if in cron-mode and write extra log info.
 if args.cron:
-    print "Running cleanup: " + time.strftime("%a %Y-%m-%d %H:%M:%S")
     print "------------------------------------------------\n"
+    print "Running cleanup: " + time.strftime("%a %Y-%m-%d %H:%M:%S" + "\n"
 
 # Check if torrent activity should be ignored.
 if args.force:
