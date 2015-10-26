@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: media-cleaner\n"
 "Report-Msgid-Bugs-To: media-cleaner@packages.debian.org\n"
-"POT-Creation-Date: 2015-10-18 16:12+0200\n"
+"POT-Creation-Date: 2015-10-26 03:05+0100\n"
 "PO-Revision-Date: 2015-10-18 15:45+0200\n"
 "Last-Translator: N/A <N/A>\n"
 "Language-Team: Swedish <LL@li.org>\n"
@@ -62,8 +62,11 @@ msgstr ""
 msgid ""
 "path:\n"
 "  tv: <your path to the tv-serie root folder>\n"
-"  tv: <your path to the movie root folder>"
+"  movie: <your path to the movie root folder>"
 msgstr ""
+"path:\n"
+"  tv: <sökvägen till tv-serie root mappen>\n"
+"  movie: <sökvägen till the movie root mappen>"
 
 #. Type: string
 #. Description
@@ -81,25 +84,25 @@ msgstr ""
 #. Choices
 #: ../templates:3001
 msgid "1h"
-msgstr ""
+msgstr "1t"
 
 #. Type: select
 #. Choices
 #: ../templates:3001
 msgid "2h"
-msgstr ""
+msgstr "2t"
 
 #. Type: select
 #. Choices
 #: ../templates:3001
 msgid "5h"
-msgstr ""
+msgstr "5t"
 
 #. Type: select
 #. Choices
 #: ../templates:3001
 msgid "1d"
-msgstr ""
+msgstr "1d"
 
 #. Type: select
 #. Description
@@ -112,3 +115,15 @@ msgstr "Intervallet för att schemalägga städing:"
 #: ../templates:3002
 msgid "The interval is used in a cron job."
 msgstr "Intervallet används i ett cron job."
+
+#. Type: string
+#. Description
+#: ../templates:4001
+msgid "The user(name) to run the scheduled task:"
+msgstr "Användaren (namn) för att köra den schemalagda städningen:"
+
+#. Type: string
+#. Description
+#: ../templates:4001
+msgid "The user needs to have rw priviliges in the media libraries."
+msgstr "Användaren bör ha skriv/läs rättigheter i media biblioteken."

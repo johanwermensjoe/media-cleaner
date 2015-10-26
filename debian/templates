@@ -15,7 +15,7 @@ _Description: Path of the config file:
  .
  path:
    tv: <your path to the tv-serie root folder>
-   tv: <your path to the movie root folder>
+   movie: <your path to the movie root folder>
  .
  The structure in the tv-serie root folder is expected to follow:
    <root folder>/<tv-serie name>/*
@@ -27,3 +27,8 @@ __Choices: 1h, 2h, 5h, 1d
 Default: 1h
 _Description: The interval at which to schedule the cleaning:
  The interval is used in a cron job.
+
+Template: media-cleaner/cron_user
+Type: string
+_Description: The user(name) to run the scheduled task:
+ The user needs to have rw priviliges in the media libraries. 

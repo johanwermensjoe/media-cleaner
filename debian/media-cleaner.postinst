@@ -20,8 +20,8 @@ if [ "$RET" = "true" ]; then
     elif [ "$RET" = "1d" ]; then
         schedulingInterval="@daily"
     fi
-
-    echo "$schedulingInterval $(logname) /usr/bin/media-cleaner $configPath >> /var/log/media-cleaner/media-cleaner.log 2>&1" > /etc/cron.d/media-cleaner
+    db_get media-cleaner/cron_user
+    echo "$schedulingInterval $RET /usr/bin/media-cleaner -vtmc --config $configPath >> /var/log/media-cleaner/media-cleaner.log 2>&1" > /etc/cron.d/media-cleaner
 fi
 
 # Give sufficient premissions for log storage.

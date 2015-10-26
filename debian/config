@@ -13,5 +13,6 @@ if [ "$RET" = "true" ]; then
     # Promt the user fo additional scheduling information.
     db_input high media-cleaner/config_path || true
     db_input high media-cleaner/scheduling_interval || true
+    db_input high media-cleaner/cron_user || true
     db_go
 fi

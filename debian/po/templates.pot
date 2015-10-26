@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: media-cleaner\n"
 "Report-Msgid-Bugs-To: media-cleaner@packages.debian.org\n"
-"POT-Creation-Date: 2015-10-18 16:12+0200\n"
+"POT-Creation-Date: 2015-10-26 03:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -58,7 +58,7 @@ msgstr ""
 msgid ""
 "path:\n"
 "  tv: <your path to the tv-serie root folder>\n"
-"  tv: <your path to the movie root folder>"
+"  movie: <your path to the movie root folder>"
 msgstr ""
 
 #. Type: string
@@ -104,4 +104,16 @@ msgstr ""
 #. Description
 #: ../templates:3002
 msgid "The interval is used in a cron job."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../templates:4001
+msgid "The user(name) to run the scheduled task:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../templates:4001
+msgid "The user needs to have rw priviliges in the media libraries."
 msgstr ""
