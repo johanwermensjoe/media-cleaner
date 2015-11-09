@@ -5,6 +5,114 @@ import re
 import deluge_tools
 import rarfile.rarfile
 import yaml
+
+##########################################################
+################## Cleaning Procedures ###################
+
+def clean_movie(rootDir, flags):
+    # Setup a new operation counter for tv-series cleaning.
+    # Extract and clean any archives.
+    opCounter = media_tools.extract_and_clean_archives(rootDir, flags)
+
+    # Sort and cleanup.
+    for movieName in os.listdir(rootDir):
+        
+        # Extract the cleaned movie directory name.
+        cleanedMovieName = media_tools.get_clean_movie_dir_name(movieName)
+        
+        # Try to clean the movie directory or file.
+        if os.path.isfile(os.path.join(rootDir, movieName)):
+            log("Found movie file in root directory: " + movieName, flags)
+            opCounter = media_tools.merge_op_counts(opCounter, \
+                media_tools.move_file_dir(os.path.join(rootDir, movieName), \
+                    os.path.join(os.path.join(rootDir, cleanedMovieName), movieName), \
+                        "movie", flags))
+        else:
+            opCounter = media_tools.merge_op_counts(opCounter, \
+                media_tools.move_file_dir(os.path.join(rootDir, movieName), \
+                    os.path.join(rootDir, cleanedMovieName), "movie", flags))
+       
+        # Update path incase directory has been renamed or the file moved.
+        if not flags['safemode']:
+            # Update the current directory path.
+            movieName = cleanedMovieName    
+
+        # Set the movie to walk through.
+        currentDir = os.path.join(rootDir, movieName)
+
+        # Go through files in movies folder and check path.
+        for dirPath, dirs, files in os.walk(currentDir):
+            for file in files:
+                # Check if main file.
+                if media_tools.is_main_file(file, dirPath):
+                    # Clean tv main file name.
+                    opCounter = media_tools.merge_op_counts(opCounter, \
+                        media_tools.clean_movie_main_file(dirPath, file, \
+                                                        currentDir, movieName, flags))
+                else:
+                    opCounter = media_tools.merge_op_counts(opCounter, \
+                        clean_other_file(currentDir, dirPath, file, flags))
+
+        # Delete empty directories.
+        opCounter = media_tools.merge_op_counts(opCounter, \
+            media_tools.remove_empty_folders(currentDir, flags))
+        
+    media_tools.print_op_count(opCounter, flags)
+    log("Cleanup completed.\n", flags, 1)
+
+def clean_tv(rootDir, flags):
+    # Extract and clean any archives.
+    opCounter = media_tools.extract_and_clean_archives(rootDir, flags)
+
+    # Sort and cleanup.
+    for seriesName in os.listdir(rootDir):
+        # Set the current series to walk through.
+        currentDir = os.path.join(rootDir, seriesName)
+
+        # Go through files in a series folder and check path.
+        for dirPath, dirs, files in os.walk(currentDir):
+            for file in files:
+                if media_tools.has_markers(file) and \
+                        media_tools.is_main_file(file, dirPath):
+                    # Clean tv main file name.
+                    opCounter = media_tools.merge_op_counts(opCounter, \
+                        media_tools.clean_tv_main_file(\
+                            currentDir, dirPath, file, seriesName, flags))
+                else:
+                    opCounter = media_tools.merge_op_counts(opCounter, \
+                        clean_other_file(currentDir, dirPath, file, flags))
+
+        # Delete empty directories.
+        opCounter = media_tools.merge_op_counts(opCounter, \
+            media_tools.remove_empty_folders(currentDir, flags))
+    
+    media_tools.print_op_count(opCounter, flags)
+    log("Cleanup completed.\n", flags, 1)
+    
+def clean_other_file(baseDir, dirPath, file, flags):
+    opCounter = {}
+    
+    # Clean other types of files.
+    if media_tools.is_extras_file(file, dirPath):
+        # Extra video content, move to folder.
+        extrasPath = os.path.join(baseDir, "Extras")
+        opCounter = media_tools.merge_op_counts(opCounter, \
+            media_tools.move_file_dir(os.path.join(dirPath, file), \
+                                    os.path.join(extrasPath, file), "extras", flags))
+    
+    elif media_tools.is_music_file(file):
+        # Extra music content, move to folder.
+        musicPath = os.path.join(baseDir, "Soundtrack")
+        opCounter = media_tools.merge_op_counts(opCounter, \
+            media_tools.move_file_dir(os.path.join(dirPath, file), \
+                                    os.path.join(musicPath, file), "music", flags))
+                    
+    elif not media_tools.is_torrent_file(file):
+        # File not needed remove.
+        opCounter = media_tools.merge_op_counts(opCounter, \
+            media_tools.remove_file(dirPath, file, flags))
+            
+    return opCounter
         
 ##########################################################
 ################ Filetype checking/parsing ###############
@@ -96,7 +204,7 @@ def get_value_from_yaml(filepath, rootTree, branch):
     return doc[rootTree][branch]
     
 ##########################################################
-################ File/Directory tools ####################
+################### Cleaning  tools ######################
 
 def clean_tv_main_file(seriesDir, dirPath, file, seriesName, flags):
     # Make proper path.
@@ -213,8 +321,7 @@ def remove_empty_folders(path, flags):
                 
     # If folder empty, delete it
     else:
-        if flags['verbose']:
-            print "Removing empty folder:", path
+        log("Removing empty folder:" + path, flags)
         if not flags['safemode']:
             os.rmdir(path)
         return {'d_rm': 1}
@@ -233,10 +340,9 @@ def move_file_dir(oldPath, newPath, fileDirType, flags):
         if oldDir != newDir:
             # Move
             opCounter = {('f_m' if os.path.isfile(oldPath) else 'd_m'): 1}
-            if flags['verbose']:
-                print "Moving " + fileDirType + \
-                    (" file" if os.path.isfile(oldPath) else " directory") + ":\n" + \
-                    oldPath + "\nTo: " + newPath
+            log("Moving " + fileDirType + \
+                (" file" if os.path.isfile(oldPath) else " directory") + ":\n" + \
+                oldPath + "\nTo: " + newPath, flags)
             if not flags['safemode']:
                 # Make sure parent directory exists.
                 if not os.path.isdir(newDir):
@@ -244,10 +350,9 @@ def move_file_dir(oldPath, newPath, fileDirType, flags):
         else:
             # Rename
             opCounter = {('f_r' if os.path.isfile(oldPath) else 'd_r'): 1}
-            if flags['verbose']:
-                print "Renaming " + fileDirType + \
-                    (" file" if os.path.isfile(oldPath) else " directory") + ":\n" + \
-                    oldPath + "\nTo: " + newPath
+            log("Renaming " + fileDirType + \
+                (" file" if os.path.isfile(oldPath) else " directory") + ":\n" + \
+                oldPath + "\nTo: " + newPath, flags)
         if not flags['safemode']:
             # Do the move/rename.
             os.rename(oldPath, newPath)
@@ -255,8 +360,7 @@ def move_file_dir(oldPath, newPath, fileDirType, flags):
     return opCounter
             
 def remove_file(dirPath, file, flags):
-    if flags['verbose']:
-        print "Removing file: "  + os.path.join(dirPath, file)
+    log("Removing file: "  + os.path.join(dirPath, file), flags)
     if not flags['safemode']:
         os.remove(os.path.join(dirPath, file))
         
@@ -285,8 +389,7 @@ def extract_and_clean_archives(rootDir, flags):
 def _extract_rar(dirPath, mainFile, flags):
     
     # Extract files.
-    if flags['verbose']:
-        print "Extracting archive: " + os.path.join(dirPath, mainFile)
+    log("Extracting archive: " + os.path.join(dirPath, mainFile), flags)
     if not flags['safemode']:
         # Set to '/' to be more compatible with zipfile
         rarfile.PATH_SEP = '/'
@@ -303,8 +406,7 @@ def _remove_archive(dirPath, mainFile, ):
     for file in os.listdir(dirPath):
         if _is_compressed_file(file) and mainFile[:-4] in file:
             opCounter = merge_op_counts(opCounter, {'f_rm': 1})
-            if flags['verbose']:
-                print "Removing archive file: " + os.path.join(dirPath, file)
+            log("Removing archive file: " + os.path.join(dirPath, file), flags)
             if not flags['safemode']:
                 os.remove(os.path.join(dirPath, file))
     return opCounter
@@ -343,10 +445,11 @@ def _format_op_count(opCount):
 def print_op_count(opCount, flags):
     if opCount:
         # Check that it's not empty.
-        print "Operation count " + ("(safemode/not executed):" if flags['safemode'] else ":") 
-        print _format_op_count(opCount)
+        log("Operation count " + ("(safemode/not executed):" if flags['safemode'] else ":"), \
+                flags, 1)
+        log(_format_op_count(opCount), flags, 1)
     else:
-        print "No operations performed." 
+        log("No operations performed.", flags, 1) 
               
 def merge_op_counts(opCount1, opCount2):
     for k,v in opCount2.items():
@@ -356,7 +459,38 @@ def merge_op_counts(opCount1, opCount2):
             opCount1[k] = v
             
     return opCount1
-            
+    
+##########################################################
+####################### Logging ##########################
+
+def log(msg, flags, priority=0):
+    if flags['verbose'] or (not flags['quiet'] and priority > 0):
+        print msg
+
+# Prints the "msg" to stdout using the specified text type (TextType class).
+def print_color(msg, color):
+    print color + msg + _ColorCode.ENDC
+
+class TextType:
+    HEADER = _ColorCode.HEADER
+    BLUE = _ColorCode.OKBLUE
+    GREEN = _ColorCode.OKGREEN
+    WARNING = _ColorCode.WARNING
+    FAIL = _ColorCode.FAIL
+    BOLD = _ColorCode.BOLD
+    UNDERLINE = _ColorCode.UNDERLINE
+
+class _ColorCode:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 ##########################################################
 ################ Deluge communication ####################
 
@@ -364,7 +498,7 @@ def _deluge_torrent_count_callback(count):
     if count == 0:
         callback()
     else:
-        print "There are still live torrents, aborting."
+        log("There are still live torrents, aborting.", {'verbose': True}, 1)
         
 def deluge_run_if_no_torrents(fn):
     global callback
