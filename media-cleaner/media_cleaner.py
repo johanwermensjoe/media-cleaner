@@ -55,9 +55,9 @@ if args.version:
     media_tools.log(__version__, flags, 1)
     quit()
 
-# Check if in cron-mode and write extra log info.
+# Check if in cron-mode and write extra log header info.
 if args.cron:
-    media_tools.log("------------------------------------------------\n", flags, 1)
+    media_tools.log("\n------------------------------------------------", flags, 1)
     media_tools.log("Running cleanup: " + time.strftime("%a %Y-%m-%d %H:%M:%S") + "\n", flags, 1)
 
 # Check if torrent activity should be ignored.
@@ -76,6 +76,10 @@ def clean():
         media_tools.log("Safemode enabled, not changing any files.", flags, 1)
     else:
         media_tools.log("Safemode disabled, all changes will be applied.", flags, 1)
+    
+    # Finish the log header. 
+    if args.cron:   
+        media_tools.log("------------------------------------------------", flags, 1)
         
     # Clean what was specified.
     if args.movie:
@@ -85,7 +89,7 @@ def clean():
         else:
             # Get path from yaml file.
             rootDir = media_tools.get_value_from_yaml(args.config, "path", "movie")
-        media_tools.log("Running movie cleanup script on: " + rootDir, flags, 1)
+        media_tools.log("\nRunning movie cleanup script on: " + rootDir, flags, 1)
         clean_movie(rootDir, flags)
         
     if args.tv:
@@ -95,9 +99,10 @@ def clean():
         else:
             # Get path from yaml file.
             rootDir = media_tools.get_value_from_yaml(args.config, "path", "tv")
-        media_tools.log("Running tv-serie cleanup script on: " + rootDir, flags, 1)
+        
+        media_tools.log("\nRunning tv-serie cleanup script on: " + rootDir, flags, 1)
         clean_tv(rootDir, flags)
     
     # Check if in cron-mode and write extra log info.
     if args.cron:
-        media_tools.log("------------------------------------------------\n", flags, 1)
+        media_tools.log("\n------------------------------------------------", flags, 1)

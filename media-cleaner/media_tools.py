@@ -12,24 +12,24 @@ import yaml
 def clean_movie(rootDir, flags):
     # Setup a new operation counter for tv-series cleaning.
     # Extract and clean any archives.
-    opCounter = media_tools.extract_and_clean_archives(rootDir, flags)
+    opCounter = extract_and_clean_archives(rootDir, flags)
 
     # Sort and cleanup.
     for movieName in os.listdir(rootDir):
         
         # Extract the cleaned movie directory name.
-        cleanedMovieName = media_tools.get_clean_movie_dir_name(movieName)
+        cleanedMovieName = get_clean_movie_dir_name(movieName)
         
         # Try to clean the movie directory or file.
         if os.path.isfile(os.path.join(rootDir, movieName)):
             log("Found movie file in root directory: " + movieName, flags)
-            opCounter = media_tools.merge_op_counts(opCounter, \
-                media_tools.move_file_dir(os.path.join(rootDir, movieName), \
+            opCounter = merge_op_counts(opCounter, \
+                move_file_dir(os.path.join(rootDir, movieName), \
                     os.path.join(os.path.join(rootDir, cleanedMovieName), movieName), \
                         "movie", flags))
         else:
-            opCounter = media_tools.merge_op_counts(opCounter, \
-                media_tools.move_file_dir(os.path.join(rootDir, movieName), \
+            opCounter = merge_op_counts(opCounter, \
+                move_file_dir(os.path.join(rootDir, movieName), \
                     os.path.join(rootDir, cleanedMovieName), "movie", flags))
        
         # Update path incase directory has been renamed or the file moved.
@@ -44,20 +44,20 @@ def clean_movie(rootDir, flags):
         for dirPath, dirs, files in os.walk(currentDir):
             for file in files:
                 # Check if main file.
-                if media_tools.is_main_file(file, dirPath):
+                if is_main_file(file, dirPath):
                     # Clean tv main file name.
-                    opCounter = media_tools.merge_op_counts(opCounter, \
-                        media_tools.clean_movie_main_file(dirPath, file, \
-                                                        currentDir, movieName, flags))
+                    opCounter = merge_op_counts(opCounter, \
+                        clean_movie_main_file(dirPath, file, \
+                                                currentDir, movieName, flags))
                 else:
-                    opCounter = media_tools.merge_op_counts(opCounter, \
+                    opCounter = merge_op_counts(opCounter, \
                         clean_other_file(currentDir, dirPath, file, flags))
 
         # Delete empty directories.
-        opCounter = media_tools.merge_op_counts(opCounter, \
-            media_tools.remove_empty_folders(currentDir, flags))
+        opCounter = merge_op_counts(opCounter, \
+            remove_empty_folders(currentDir, flags))
         
-    media_tools.print_op_count(opCounter, flags)
+    print_op_count(opCounter, flags)
     log("Cleanup completed.\n", flags, 1)
 
 def clean_tv(rootDir, flags):
@@ -72,46 +72,45 @@ def clean_tv(rootDir, flags):
         # Go through files in a series folder and check path.
         for dirPath, dirs, files in os.walk(currentDir):
             for file in files:
-                if media_tools.has_markers(file) and \
-                        media_tools.is_main_file(file, dirPath):
+                if has_markers(file) and \
+                        is_main_file(file, dirPath):
                     # Clean tv main file name.
-                    opCounter = media_tools.merge_op_counts(opCounter, \
-                        media_tools.clean_tv_main_file(\
-                            currentDir, dirPath, file, seriesName, flags))
+                    opCounter = merge_op_counts(opCounter, \
+                        clean_tv_main_file(currentDir, dirPath, \
+                                            file, seriesName, flags))
                 else:
-                    opCounter = media_tools.merge_op_counts(opCounter, \
+                    opCounter = merge_op_counts(opCounter, \
                         clean_other_file(currentDir, dirPath, file, flags))
 
         # Delete empty directories.
-        opCounter = media_tools.merge_op_counts(opCounter, \
-            media_tools.remove_empty_folders(currentDir, flags))
+        opCounter = merge_op_counts(opCounter, \
+            remove_empty_folders(currentDir, flags))
     
-    media_tools.print_op_count(opCounter, flags)
+    print_op_count(opCounter, flags)
     log("Cleanup completed.\n", flags, 1)
     
 def clean_other_file(baseDir, dirPath, file, flags):
     opCounter = {}
     
     # Clean other types of files.
-    if media_tools.is_extras_file(file, dirPath):
+    if is_extras_file(file, dirPath):
         # Extra video content, move to folder.
         extrasPath = os.path.join(baseDir, "Extras")
-        opCounter = media_tools.merge_op_counts(opCounter, \
-            media_tools.move_file_dir(os.path.join(dirPath, file), \
-                                    os.path.join(extrasPath, file), "extras", flags))
+        opCounter = merge_op_counts(opCounter, \
+            move_file_dir(os.path.join(dirPath, file), \
+                            os.path.join(extrasPath, file), "extras", flags))
     
-    elif media_tools.is_music_file(file):
+    elif is_music_file(file):
         # Extra music content, move to folder.
         musicPath = os.path.join(baseDir, "Soundtrack")
-        opCounter = media_tools.merge_op_counts(opCounter, \
-            media_tools.move_file_dir(os.path.join(dirPath, file), \
+        opCounter = merge_op_counts(opCounter, \
+                                    move_file_dir(os.path.join(dirPath, file), \
                                     os.path.join(musicPath, file), "music", flags))
                     
-    elif not media_tools.is_torrent_file(file):
+    elif not is_torrent_file(file):
         # File not needed remove.
-        opCounter = media_tools.merge_op_counts(opCounter, \
-            media_tools.remove_file(dirPath, file, flags))
-            
+        opCounter = merge_op_counts(opCounter, \
+                                    media_tools.remove_file(dirPath, file, flags))
     return opCounter
         
 ##########################################################
@@ -305,7 +304,7 @@ def get_clean_movie_dir_name(movieName):
 ##########################################################
 ################ File/Directory tools ####################
 
-def remove_empty_folders(path, flags):
+def remove_empty_folders(path, flags, removeRoot=True):
     if not os.path.isdir(path):
         return
 
@@ -320,11 +319,12 @@ def remove_empty_folders(path, flags):
                     remove_empty_folders(fullpath, flags))
                 
     # If folder empty, delete it
-    else:
+    files = os.listdir(path)
+    if len(files) == 0 and removeRoot:
         log("Removing empty folder:" + path, flags)
         if not flags['safemode']:
             os.rmdir(path)
-        return {'d_rm': 1}
+        merge_op_counts(opCounter, {'d_rm': 1})
     
     return opCounter
             
