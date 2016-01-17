@@ -15,7 +15,8 @@ Depends: ${misc:Depends}, ${python:Depends},
          python (>= 2.7),
          logrotate,
          python-rarfile (>= 2.7),
-         python-pyyaml (>= 3.10)
+         python-pyyaml (>= 3.10),
+         deluged (>= 1.3.6)
 Description: python script to clean and sort media files
  The script will clean up and format the names of movies and
  tv-series files into predetermined formats and folder structure. 
