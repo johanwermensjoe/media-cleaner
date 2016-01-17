@@ -6,6 +6,7 @@ The main media cleaner script.
 """
 
 import mediatools
+from mediatools import log, TextType
 import argparse
 import time
 
@@ -16,15 +17,15 @@ def clean(flags, args):
     """ Cleans libraries . """
     # Check if safemode is enabled.
     if args.safemode:
-        mediatools.log(flags, "Safemode enabled, not changing any files.", \
+        log(flags, "Safemode enabled, not changing any files.", \
                             TextType.INFO)
     else:
-        mediatools.log(flags, "Safemode disabled, all changes will be applied.", \
+        log(flags, "Safemode disabled, all changes will be applied.", \
                             TextType.INFO)
 
     # Finish the log header.
     if args.cron:
-        mediatools.log(flags, "-------------------------" + \
+        log(flags, "-------------------------" + \
                             "-----------------------", TextType.INFO)
 
     # Clean what was specified.
@@ -36,7 +37,7 @@ def clean(flags, args):
             # Get path from yaml file.
             root_dir = mediatools.get_value_from_yaml(args.config, \
                                                         "path", "movie")
-        mediatools.log(flags, "\nRunning movie cleanup script on: " + root_dir, \
+        log(flags, "\nRunning movie cleanup script on: " + root_dir, \
                             TextType.INFO)
         mediatools.clean_movie(flags, root_dir)
 
@@ -49,13 +50,13 @@ def clean(flags, args):
             root_dir = mediatools.get_value_from_yaml(args.config, \
                                                         "path", "tv")
 
-        mediatools.log(flags, "\nRunning tv-serie cleanup script on: " + \
+        log(flags, "\nRunning tv-serie cleanup script on: " + \
                             root_dir, TextType.INFO)
         mediatools.clean_tv(flags, root_dir)
 
     # Check if in cron-mode and write extra log info.
     if args.cron:
-        mediatools.log(flags, "-------------------------" + \
+        log(flags, "-------------------------" + \
                             "-----------------------", TextType.INFO)
 
 ########################## Argument Parsing #############################
@@ -102,31 +103,31 @@ def parse_args_and_execute():
 
     # Check path args.
     if args.tv and not args.tv_dir and not args.config:
-        mediatools.log(flags, "No path set for tv library, see " + \
+        log(flags, "No path set for tv library, see " + \
                             "--tv-dir or --config", TextType.INFO)
         quit()
     if args.movie and not args.movie_dir and not args.config:
-        mediatools.log(flags, "No path set for movie library, see " + \
+        log(flags, "No path set for movie library, see " + \
                             "--movie-dir or --config", TextType.INFO)
         quit()
 
     # Check if in cron-mode and write extra log info.
     if args.version:
-        mediatools.log(flags, __version__, TextType.INFO)
+        log(flags, __version__, TextType.INFO)
         quit()
 
     # Check if in cron-mode and write extra log header info.
     if args.cron:
-        mediatools.log(flags, "-------------------------" + \
+        log(flags, "-------------------------" + \
                             "-----------------------", TextType.INFO)
-S
-        mediatools.log(flags, "Running cleanup: " + \
+
+        log(flags, "Running cleanup: " + \
                             time.strftime("%a %Y-%m-%d %H:%M:%S") + \
                             "\n", TextType.INFO)
 
     # Check if torrent activity should be ignored.
     if args.force:
-        mediatools.log(flags, "Force enabled, skipping torrent " + \
+        log(flags, "Force enabled, skipping torrent " + \
                             "activity check.", TextType.INFO)
         # Start cleanup.
         clean(flags, args)
