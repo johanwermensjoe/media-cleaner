@@ -1,4 +1,7 @@
-# deluge_tools module.
+"""
+delugetools module:
+Contains various functions for communication with a deluge daemon.
+"""
 
 from deluge.log import LOG as log
 from deluge.ui.client import client
@@ -6,7 +9,8 @@ import deluge.component as component
 from twisted.internet import reactor, defer
 import time
 
-is_interactive = False # Set this to True to allow direct output or set to False for cron
+# Set this to True to allow direct output or set to False for cron
+is_interactive = False
 
 status_keys = ["state",
         "save_path",
@@ -69,23 +73,27 @@ def printReport(rresult):
 
 def on_torrents_status(torrents):
     global filtertime
-    tlist=[]
+    tlist = []
     count = len(torrents.items())
     for torrent_id, status in torrents.items():
         printSuccess(None, False, "Current torrent id is: %s" % (torrent_id))
         printSuccess(None, False, "--Torrent name is: %s" % (status["name"]))
         printSuccess(None, False, "--Torrent state is: %s" % (status["state"]))
         printSuccess(None, False, "--Torrent ratio is: %s" % (status["ratio"]))
-        printSuccess(None, False, "--Torrent DL rate is: %s" % (status["download_payload_rate"]))
-        printSuccess(None, False, "--Torrent UL rate is: %s" % (status["upload_payload_rate"]))
-        printSuccess(None, False, "--Torrent tracker is: %s" % (status["tracker_status"]))
+        printSuccess(None, False, "--Torrent DL rate is: %s" % \
+                        (status["download_payload_rate"]))
+        printSuccess(None, False, "--Torrent UL rate is: %s" % \
+                        (status["upload_payload_rate"]))
+        printSuccess(None, False, "--Torrent tracker is: %s" % \
+                        (status["tracker_status"]))
     # Set status.
     endSession(None)
     callback(count)
     #defer.DeferredList(tlist).addCallback(printReport)
 
 def on_session_state(result):
-    client.core.get_torrents_status({"id": result}, status_keys).addCallback(on_torrents_status)
+    client.core.get_torrents_status({"id": result}, \
+                        status_keys).addCallback(on_torrents_status)
 
 def on_connect_success(result):
     printSuccess(None, True, "Connection was successful!")
@@ -97,5 +105,6 @@ def update_status(fn):
     global callback
     callback = fn
     cliconnect = client.connect()
-    cliconnect.addCallbacks(on_connect_success, endSession, errbackArgs=("Connection failed: check settings and try again."))
+    cliconnect.addCallbacks(on_connect_success, endSession, \
+            errbackArgs=("Connection failed: check settings and try again."))
     reactor.run()
