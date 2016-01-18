@@ -262,10 +262,14 @@ def _clean_tv_main_file_name(flags, dir_path, file_, series_name):
 def _get_clean_tv_main_file_name(file_, series_name):
     """ Returns a cleaned a main tv-serie file name. """
     if has_markers(file_):
+        # Create episode id.
+        episode_id = series_name.replace(" ", ".") + ".S" + \
+                  str(_get_season_num(file_)).zfill(2) + "E" + \
+                  str(_get_episode_num(file_)).zfill(2)
+
         # Name can be formatted.
         quality_match = re.search(
-            r'''(?i)(?:(?:episode|x|e)\s*
-                (?:\d{1,2})|^\d{3})\W+(.*)\..{1,4}$''', file_)
+            r'''(?i)(?:(?:episode|x|e)\s*(?:\d{1,2})|^\d{3})\W+(.*)\..{1,4}$''', file_)
         # Omit quality if not found
         if quality_match != None:
             quality = quality_match.group(1)
@@ -273,11 +277,13 @@ def _get_clean_tv_main_file_name(file_, series_name):
             quality = file_.rsplit(".", 1)[0]
         else:
             quality = ""
+        
+        # Clean from additional episode id in quality string.
+        if quality.lower().startswith(episode_id.lower()):
+            quality = quality[len(episode_id):]        
         quality = quality.strip(" ._-")
-        return series_name.replace(" ", ".") + ".S" + \
-                  str(_get_season_num(file_)).zfill(2) + "E" + \
-                  str(_get_episode_num(file_)).zfill(2) + \
-                  ("." if quality != "" else "") + \
+        
+        return episode_id + ("." if quality != "" else "") + \
                   quality.replace(" ", ".").upper() + "." + \
                   file_.rsplit(".", 1)[1]
 
@@ -425,6 +431,10 @@ def move_file_dir(flags, old_path, new_path, file_dir_type):
                 (" file" if os.path.isfile(old_path) else " directory") + \
                 ":\n" + old_path + "\nTo: " + new_path)
         if not flags['safemode']:
+            # If only case has been changed do temp move (Samba compability).
+            if old_path.lower() == new_path.lower():
+                os.rename(old_path, old_path + "_temp")
+                old_path += "_temp"
             # Do the move/rename.
             os.rename(old_path, new_path)
 
