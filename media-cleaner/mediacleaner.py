@@ -76,7 +76,9 @@ def parse_args_and_execute():
         help='enables verbose mode')
     group_vq.add_argument("-q", "--quiet", action="store_true", \
         help='enables quiet mode')
-    parser.add_argument('-c', '-cron', action='store_true', \
+    parser.add_argument('-c', '--color', action='store_true', \
+        help='enables colored log output')
+    parser.add_argument('-C', '--cron', action='store_true', \
         help='enables cron mode with extra log output')
 
     parser.add_argument('-s', '--safemode', action='store_true', \
@@ -99,7 +101,8 @@ def parse_args_and_execute():
     args = parser.parse_args()
     flags = {'safemode':args.safemode, \
             'verbose':args.verbose, \
-            'quiet':args.quiet}
+            'quiet':args.quiet, \
+            'color':args.color}
 
     # Check path args.
     if args.tv and not args.tv_dir and not args.config:

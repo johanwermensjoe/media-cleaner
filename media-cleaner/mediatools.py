@@ -23,7 +23,8 @@ def clean_movie(flags, root_dir):
     for movie_name in os.listdir(root_dir):
 
         # Extract the cleaned movie directory name.
-        cleaned_movie_name = get_clean_movie_dir_name(movie_name)
+        cleaned_movie_name = get_clean_movie_dir_name(movie_name, \
+                                    os.path.join(root_dir, movie_name))
 
         # Try to clean the movie directory or file.
         if os.path.isfile(os.path.join(root_dir, movie_name)):
@@ -172,6 +173,10 @@ def is_main_file(file_, path):
             or (_is_subtitle_file(file_) and not is_extras_file(file_, path)) \
             or _is_compressed_file(file_)
 
+def is_valid_media_name(name):
+    """ Checks if a media name seems valid. (Not definitive) """
+    return name != "None"
+
 def is_extras_file(file_, path):
     """ Checks if a file is a extras file. """
     match = re.match(r'''(?i).*(?:\W+extra\W+)''', file_)
@@ -232,9 +237,9 @@ def get_value_from_yaml(file_path, root_tree, branch):
 def clean_tv_main_file(flags, series_dir, dir_path, file_, series_name):
     """ Clean a main tv-serie file. """
     # Make proper path.
-    proper_path = os.path.join(
-                          os.path.join(series_dir,
-                                "Season " + _get_season_num(file_)),
+    proper_path = os.path.join( \
+                          os.path.join(series_dir, \
+                                "Season " + _get_season_num(file_)), \
                           series_name + " S" + \
                           str(_get_season_num(file_)).zfill(2) + "E" + \
                           str(_get_episode_num(file_)).zfill(2))
@@ -326,16 +331,44 @@ def _get_clean_movie_main_file_name(file_, movie_name):
                 file_.rsplit(".", 1)[1]
 
 
-def get_clean_movie_dir_name(movie_name):
+def get_clean_movie_dir_name(movie_name, dir_):
     """ Returns a cleaned movie directory name. """
-    match_std = re.match(r'''(?i)(.*)\W[\[(]?(\d{4})[\])]?\W''', movie_name)
-    if match_std != None:
+    match = get_movie_name_year_match(movie_name)
+
+    # If the name might be incorrect, check for possible alts.
+    if (not is_valid_media_name(match[0]) or match == None) \
+            and os.path.isdir(dir_):
+        match = find_movie_name_year_match(dir_)
+
+    if match != None:
         # Format movie name into std format: "My Movie (2015)."
-        return re.sub(r'''[._]+|\s+''', " ", match_std.group(1).strip()) + \
-                        " (" + match_std.group(2) + ")"
+        return re.sub(r'''[._]+|\s+''', " ", match[0]) + " (" + match[1] + ")"
     else:
         # Return the inputed name in case of pattern matching would fail.
         return movie_name
+
+def find_movie_name_year_match(dir_):
+    """ Finds a valid movie name in a movie directory, None if no exists. """
+    # Find all possible files and directoris to check.
+    names_to_check = []
+    for _, dirs, files in os.walk(dir_):
+        names_to_check += files
+        names_to_check += dirs
+
+    # Test all names.
+    for name in names_to_check:
+        match = get_movie_name_year_match(name)
+        if match != None and is_valid_media_name(match[0]):
+            return match
+    return None
+
+def get_movie_name_year_match(movie_name):
+    """ Returns a tuple with name and year or None if not found. """
+    match_std = re.match(r'''(?i)(.*)\W[\[(]?(\d{4})[\])]?\W''', movie_name)
+    if match_std != None:
+        return (match_std.group(1).strip(), match_std.group(2))
+    else:
+        return None
 
 ##########################################################
 ################ File/Directory tools ####################
@@ -465,12 +498,12 @@ _OP_KEYS = ['a_e',
             'd_r',
             'd_m']
 
-_OP_VALUES = ["Archive extraction",
-            "File remove",
-            "File rename",
-            "File move",
-            "Directory remove",
-            "Directory rename",
+_OP_VALUES = ["Archive extraction", \
+            "File remove", \
+            "File rename", \
+            "File move", \
+            "Directory remove", \
+            "Directory rename", \
             "Directory move"]
 
 
@@ -545,7 +578,7 @@ def _print_format(msg, format_):
     """
     if format_:
         # Print format codes., message and end code.
-        print str.join(format_) + msg + _ColorCode.ENDC
+        print str.join("", format_) + msg + _ColorCode.ENDC
     else:
         print msg
 
