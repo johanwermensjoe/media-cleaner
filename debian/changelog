@@ -1,3 +1,11 @@
+media-cleaner (1.1-0~ppa1) trusty; urgency=low
+
+  * Added deluged dependency to avoid import errors.
+  * Set proper dependencies for pyyaml and rarfile.
+  * Imported Upstream version 1.1
+
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Tue, 19 Jan 2016 00:05:55 +0100
+
 media-cleaner (1.0-0~ppa1) trusty; urgency=low
 
   * Initial release.
