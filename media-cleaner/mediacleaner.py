@@ -10,7 +10,7 @@ from mediatools import log, TextType
 import argparse
 import time
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 # Main cleaning function.
 def clean(flags, args):
@@ -136,7 +136,7 @@ def parse_args_and_execute():
         clean(flags, args)
     else:
         # Do torrent activity check and start cleanup.
-        mediatools.deluge_run_if_no_torrents(clean)
+        mediatools.deluge_run_if_no_torrents(lambda: clean(flags, args))
 
 
 ############################ Start script ###############################
