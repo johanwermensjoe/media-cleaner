@@ -1,3 +1,10 @@
+media-cleaner (1.2-0~ppa1) trusty; urgency=low
+
+  * Imported Upstream version 1.2.
+  * Fixed some critical bugs.
+
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Fri, 05 Feb 2016 14:23:02 +0100
+
 media-cleaner (1.1-0~ppa1) trusty; urgency=low
 
   * Added deluged dependency to avoid import errors.
