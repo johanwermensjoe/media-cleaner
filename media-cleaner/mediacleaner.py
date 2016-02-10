@@ -10,7 +10,7 @@ from mediatools import log, TextType
 import argparse
 import time
 
-__version__ = "1.2"
+__version__ = "1.3"
 
 # Main cleaning function.
 def clean(flags, args):
