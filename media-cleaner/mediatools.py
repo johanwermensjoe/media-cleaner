@@ -59,12 +59,11 @@ def clean_movie(flags, root_dir):
                     op_counter = _merge_op_counts(op_counter, \
                         _clean_other_file(flags, current_dir, dir_path, file_))
 
-        # Delete empty directories.
+        # Delete duplicate main files.
         op_counter = _merge_op_counts(op_counter, \
-            _remove_empty_folders(flags, current_dir))
+            _clean_duplicates(flags, current_dir))
 
-    _print_op_count(flags, op_counter)
-    log(flags, "Cleanup completed.\n", TextType.INFO)
+    _finish_cleanup(flags, op_counter, root_dir)
 
 def clean_tv(flags, root_dir):
     """ Cleans a tv-serie library. """
@@ -90,12 +89,19 @@ def clean_tv(flags, root_dir):
                     op_counter = _merge_op_counts(op_counter, \
                         _clean_other_file(flags, current_dir, dir_path, file_))
 
-        # Delete empty directories.
-        op_counter = _merge_op_counts(op_counter, \
-            _remove_empty_folders(flags, current_dir))
+        for season in os.listdir(current_dir):
+            # A season directory.
+            season_dir = os.path.join(current_dir, season)
+            if os.path.isdir(season_dir):
+                for episode in os.listdir(season_dir):
+                    # An episode directory.
+                    episode_dir = os.path.join(season_dir, episode)
+                    if os.path.isdir(episode_dir):
+                        # Delete duplicate main files.
+                        op_counter = _merge_op_counts(op_counter, \
+                            _clean_duplicates(flags, episode_dir))
 
-    _print_op_count(flags, op_counter)
-    log(flags, "Cleanup completed.\n", TextType.INFO)
+    _finish_cleanup(flags, op_counter, root_dir)
 
 def _clean_other_file(flags, base_dir, dir_path, file_):
     """ Cleans auxillary fies like extras content, soundtracks etc. """
@@ -123,6 +129,16 @@ def _clean_other_file(flags, base_dir, dir_path, file_):
             _remove_file(flags, dir_path, file_))
     return op_counter
 
+def _finish_cleanup(flags, op_counter, root_dir):
+    """ Finishes cleanup with empty folder removal and stats message. """
+    # Delete empty directories.
+    op_counter = _merge_op_counts(op_counter, \
+        _remove_empty_folders(flags, root_dir))
+
+    # Log stats.
+    _print_op_count(flags, op_counter)
+    log(flags, "Cleanup completed.\n", TextType.INFO)
+
 ##########################################################
 ################ Filetype checking/parsing ###############
 
@@ -131,6 +147,9 @@ _MIN_VIDEO_SIZE = 2000000
 
 # Min main file filesize = 200 MB.
 _MIN_MAIN_VIDEO_SIZE = 200000000
+
+# A file size factor for determining relevance.
+_SIG_SIZE_MULT = 0.8
 
 def _is_video_file(file_):
     """ Checks if a file is a video file. """
@@ -172,6 +191,11 @@ def _is_main_file(file_, path):
                 or _is_extras_file(file_, path))) \
             or (_is_subtitle_file(file_) and not _is_extras_file(file_, path)) \
             or _is_compressed_file(file_)
+
+def _is_proper_main_file(file_):
+    """ Checks if a file is a proper/repack etc. release. """
+    match = re.match(r'''(?i).*\W+(?:proper|repack|rerip|real)\W+''', file_)
+    return match != None
 
 def _is_valid_media_name(name):
     """ Checks if a media name seems valid. (Not definitive) """
@@ -223,6 +247,20 @@ def _get_main_file_type(file_):
     else:
         return "video"
 
+def _compare_main_files(file1, file2):
+    """ Compares to in files in terms of relevance. """
+    size1 = os.path.getsize(file1)
+    size2 = os.path.getsize(file2)
+    if size1 * _SIG_SIZE_MULT > size2:
+        return 1
+    elif size2 * _SIG_SIZE_MULT > size1:
+        return -1
+    else:
+        if _is_proper_main_file(file1) ^ _is_proper_main_file(file2):
+            return 1 if _is_proper_main_file(file1) else -1
+        else:
+            return 1 if size1 > size2 else (-1 if size2 > size1 else 0)
+
 ##########################################################
 ##################### YAML tools #########################
 
@@ -233,6 +271,31 @@ def get_value_from_yaml(file_path, root_tree, branch):
 
 ##########################################################
 ################### Cleaning  tools ######################
+
+def _clean_duplicates(flags, dir_path):
+    """ Removes the least wanted duplicate main files. """
+    op_counter = {}
+    #print "Dup: " + dir_path
+    # Get all main files in directory.
+    main_files = []
+    for file_ in os.listdir(dir_path):
+        #print "\tFile: " + file_
+        file_path = os.path.join(dir_path, file_)
+        if os.path.isfile(file_path) and (_is_main_file(file_, dir_path) and \
+                _is_video_file(file_)):
+            main_files += [file_path]
+
+    if len(main_files) > 1:
+        main_files.sort(cmp=_compare_main_files)
+
+        # Keep the best file.
+        main_files = main_files[:-1]
+        for main_file in main_files:
+            parts = os.path.split(main_file)
+            op_counter = _merge_op_counts(op_counter, \
+                _remove_file(flags, parts[0], parts[1], file_type="duplicate"))
+
+    return op_counter
 
 def _clean_tv_main_file(flags, series_dir, dir_path, file_, series_name):
     """ Clean a main tv-serie file. """
@@ -441,9 +504,10 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
 
     return op_counter
 
-def _remove_file(flags, dir_path, file_):
+def _remove_file(flags, dir_path, file_, file_type=""):
     """ Removes a file. """
-    log(flags, "Removing file: " + os.path.join(dir_path, file_))
+    log(flags, "Removing " + file_type + " file: " + \
+                os.path.join(dir_path, file_))
     if not flags['safemode']:
         os.remove(os.path.join(dir_path, file_))
 
