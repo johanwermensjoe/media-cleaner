@@ -13,7 +13,7 @@ Package: media-cleaner
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends},
          python-rarfile (>= 2.7),
-         python-pyyaml (>= 3.11),
+         python-yaml (>= 3.10),
          logrotate,
          deluged (>= 1.3.6)
 Description: python script to clean and sort media files
