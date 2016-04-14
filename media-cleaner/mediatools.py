@@ -181,8 +181,8 @@ _MIN_VIDEO_SIZE = 2000000
 # Min main file file size = 200 MB.
 _MIN_MAIN_VIDEO_SIZE = 200000000
 
-# A file size factor for determining relevance.
-_SIG_SIZE_MULT = 0.8
+# A file size factor for determining relevance. = 100 MB
+_SIZE_SORT_INCREMENT = 100000000
 
 
 def _is_video_file(file_):
@@ -291,21 +291,6 @@ def _get_main_file_type(file_):
         return "video"
 
 
-def _compare_main_files(file1, file2):
-    """ Compares to in files in terms of relevance. """
-    size1 = path.getsize(file1)
-    size2 = path.getsize(file2)
-    if size1 * _SIG_SIZE_MULT > size2:
-        return 1
-    elif size2 * _SIG_SIZE_MULT > size1:
-        return -1
-    else:
-        if _is_proper_main_file(file1) ^ _is_proper_main_file(file2):
-            return 1 if _is_proper_main_file(file1) else -1
-        else:
-            return 1 if size1 > size2 else (-1 if size2 > size1 else 0)
-
-
 ##########################################################
 ##################### YAML tools #########################
 
@@ -332,10 +317,13 @@ def _clean_duplicates(flags, dir_path):
             main_files += [file_path]
 
     if len(main_files) > 1:
-        main_files.sort(cmp=_compare_main_files)
+        main_files.sort(key=path.getsize, reverse=True)
+        main_files.sort(key=_is_proper_main_file, reverse=True)
+        main_files.sort(key=lambda f: path.getsize(f) / _SIZE_SORT_INCREMENT,
+                        reverse=True)
 
         # Keep the best file.
-        main_files = main_files[:-1]
+        main_files = main_files[1:]
         for main_file in main_files:
             parts = path.split(main_file)
             op_counter = _merge_op_counts(op_counter,
@@ -548,7 +536,7 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
             op_counter = {('f_m' if path.isfile(old_path) else 'd_m'): 1}
             log(flags, "Moving " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
-                ":\n" + old_path + "\nTo: " + new_path)
+                ": " + old_path + "\nTo: " + new_path)
             if not flags['safemode']:
                 # Make sure parent directory exists.
                 if not path.isdir(new_dir):
@@ -558,7 +546,7 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
             op_counter = {('f_r' if path.isfile(old_path) else 'd_r'): 1}
             log(flags, "Renaming " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
-                ":\n" + old_path + "\nTo: " + new_path)
+                ": " + old_path + "\nTo: " + new_path)
         if not flags['safemode']:
             # If only case has been changed do temp move (Samba compatibility).
             if old_path.lower() == new_path.lower():
@@ -570,9 +558,10 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
     return op_counter
 
 
-def _remove_file(flags, dir_path, file_, file_type=""):
+def _remove_file(flags, dir_path, file_, file_type=None):
     """ Removes a file. """
-    log(flags, "Removing " + file_type + " file: " +
+    log(flags, "Removing " + (
+        file_type + " " if file_type is not None else "") + "file: " +
         path.join(dir_path, file_))
     if not flags['safemode']:
         remove(path.join(dir_path, file_))

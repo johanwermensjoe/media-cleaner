@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 mediacleaner module:
 The main media-cleaner script.
