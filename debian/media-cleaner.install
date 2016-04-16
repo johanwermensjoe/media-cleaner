@@ -1,3 +1,5 @@
 media-cleaner/mediacleaner.py usr/lib/media-cleaner
 media-cleaner/mediatools.py usr/lib/media-cleaner
+media-cleaner/mediaargs.py usr/lib/media-cleaner
 media-cleaner/delugetools.py usr/lib/media-cleaner
+

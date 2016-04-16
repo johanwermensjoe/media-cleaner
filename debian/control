@@ -3,11 +3,9 @@ Section: utils
 Priority: optional
 Maintainer: Johan Wermensjö, <johanwermensjoe@gmail.com>
 Build-Depends: debhelper (>= 9),
-               debconf,
-               po-debconf,
+               debconf (>= 1.5),
+               po-debconf (>= 1.0.16),
                python3 (>= 3.2)
-Build-Suggests: deluged (>= 1.3.12)
-                deluge-console (>= 1.3.12)
 Standards-Version: 3.9.5
 X-Python3-Version: >= 3.2
 
@@ -16,7 +14,9 @@ Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends},
          python3-rarfile (>= 2.7),
          python3-yaml (>= 3.10),
-         logrotate
+         logrotate (>= 3.8.7)
+Suggests: deluged (>= 1.3.12)
+          deluge-console (>= 1.3.12)
 Description: python script to clean and sort media files
  The script will clean up and format the names of movies and
  tv-series files into predetermined formats and folder structure. 
