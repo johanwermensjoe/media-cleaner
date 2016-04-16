@@ -7,46 +7,47 @@ from argparse import ArgumentParser
 from time import strftime
 
 from delugetools import has_active_torrents
+from mediaargs import Flag, Option
 from mediatools import log, TextType, clean_tv, log_err, clean_movie, \
     get_value_from_yaml
 
 __version__ = "1.3"
 
 
-def clean(flags, args):
+def clean(flags, options):
     """ Cleans libraries . """
     # Check if safemode is enabled.
-    if args.safemode:
-        log(flags, "Safemode enabled, not changing any files.",
+    if flags[Flag.SAFEMODE]:
+        log(flags, "Safemode enabled, not changing any files",
             TextType.INFO)
     else:
-        log(flags, "Safemode disabled, all changes will be applied.",
+        log(flags, "Safemode disabled, all changes will be applied",
             TextType.INFO)
 
     # Finish the log header.
-    if args.cron:
+    if options[Option.CRON]:
         log(flags, "-" * 30, TextType.INFO)
 
     # Clean what was specified.
-    if args.movie:
+    if options[Option.MOVIE]:
         # Find the library path.
-        if args.movie_dir is not None:
-            root_dir = args.movie_dir
+        if options[Option.MOVIE_DIR] is not None:
+            root_dir = options[Option.MOVIE_DIR]
         else:
             # Get path from yaml file.
-            root_dir = get_value_from_yaml(args.config,
+            root_dir = get_value_from_yaml(options[Option.CONFIG],
                                            "path", "movie")
         log(flags, "\nRunning movie cleanup script on: " + root_dir,
             TextType.INFO)
         clean_movie(flags, root_dir)
 
-    if args.tv:
+    if options[Option.TV_SERIES]:
         # Find the library path.
-        if args.tv_dir is not None:
-            root_dir = args.tv_dir
+        if options[Option.TV_SERIES_DIR] is not None:
+            root_dir = options[Option.TV_SERIES_DIR]
         else:
             # Get path from yaml file.
-            root_dir = get_value_from_yaml(args.config,
+            root_dir = get_value_from_yaml(options[Option.CONFIG],
                                            "path", "tv")
 
         log(flags, "\nRunning tv-series cleanup script on: " +
@@ -54,7 +55,7 @@ def clean(flags, args):
         clean_tv(flags, root_dir)
 
     # Check if in cron-mode and write extra log info.
-    if args.cron:
+    if options[Option.CRON]:
         log(flags, "-" * 30, TextType.INFO)
 
 
@@ -64,8 +65,7 @@ def clean(flags, args):
 def parse_args_and_execute():
     """ Parses arguments and executes requested operations. """
     # Parse arguments.
-    parser = ArgumentParser(description=
-                            'Cleans and renames media files.')
+    parser = ArgumentParser(description='Cleans and renames media files.')
 
     parser.add_argument('-V', '--version', action='store_true',
                         help='shows the version')
@@ -98,49 +98,60 @@ def parse_args_and_execute():
                         help='path to the yaml file containing media paths')
 
     args = parser.parse_args()
-    flags = {'safemode': args.safemode,
-             'verbose': args.verbose,
-             'quiet': args.quiet,
-             'color': args.color}
+    flags = {Flag.SAFEMODE: args.safemode,
+             Flag.VERBOSE: args.verbose,
+             Flag.QUIET: args.quiet,
+             Flag.COLOR: args.color}
+
+    options = {Option.VERSION: args.version,
+               Option.CRON: args.cron,
+               Option.FORCE: args.force,
+               Option.TV_SERIES: args.tv,
+               Option.MOVIE: args.movie,
+               Option.CONFIG: args.config,
+               Option.MOVIE_DIR: args.movie_dir,
+               Option.TV_SERIES_DIR: args.tv_dir}
 
     # Check path args.
-    if args.tv and args.tv_dir is None and not args.config:
-        log(flags, "No path set for tv library, see " +
-            "--tv-dir or --config", TextType.INFO)
+    if options[Option.TV_SERIES] and options[Option.TV_SERIES_DIR] is None and \
+            not options[Option.CONFIG]:
+        log(flags, "No path set for tv library, see --tv-dir or --config",
+            TextType.INFO)
         quit()
-    if args.movie and args.movie_dir is None and not args.config:
+    if options[Option.MOVIE] and options[Option.MOVIE_DIR] is None and \
+            not options[Option.CONFIG]:
         log(flags, "No path set for movie library, see " +
             "--movie-dir or --config", TextType.INFO)
         quit()
 
     # Check if in cron-mode and write extra log info.
-    if args.version:
+    if options[Option.VERSION]:
         log(flags, __version__, TextType.INFO)
         quit()
 
     # Check if in cron-mode and write extra log header info.
-    if args.cron:
+    if options[Option.CRON]:
         log(flags, "-" * 30, TextType.INFO)
 
-        log(flags, "Running cleanup: " +
-            strftime("%a %Y-%m-%d %H:%M:%S") +
-            "\n", TextType.INFO)
+        log(flags,
+            "Running cleanup: {}\n".format(strftime("%a %Y-%m-%d %H:%M:%S")),
+            TextType.INFO)
 
     # Check if torrent activity should be ignored.
-    if args.force:
-        log(flags, "Force enabled, skipping torrent " +
-            "activity check.", TextType.INFO)
+    if options[Option.FORCE]:
+        log(flags, "Force enabled, skipping torrent activity check",
+            TextType.INFO)
         # Start cleanup.
-        clean(flags, args)
+        clean(flags, options)
     else:
         # Do torrent activity check and start cleanup.
         try:
             if has_active_torrents():
-                log_err("There are still live torrents, aborting.")
+                log_err(flags, "There are still live torrents, aborting")
             else:
-                clean(flags, args)
+                clean(flags, options)
         except RuntimeError as err:
-            log_err(err.args[0])
+            log_err(flags, err.args[0])
 
 
 ############################ Start script ###############################

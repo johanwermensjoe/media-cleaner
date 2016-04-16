@@ -9,6 +9,8 @@ import rarfile
 from rarfile import RarFile
 from yaml import load
 
+from mediaargs import Flag
+
 
 ##########################################################
 ################## Cleaning Procedures ###################
@@ -51,7 +53,7 @@ def clean_movie(flags, root_dir):
                                               "movie"))
 
         # Update path in case directory has been renamed or the file moved.
-        if not flags['safemode']:
+        if not flags[Flag.SAFEMODE]:
             # Update the current directory path.
             movie_name = cleaned_movie_name
 
@@ -514,7 +516,7 @@ def _remove_empty_folders(flags, path_, remove_root=True):
     files = listdir(path_)
     if len(files) == 0 and remove_root:
         log(flags, "Removing empty folder:" + path_)
-        if not flags['safemode']:
+        if not flags[Flag.SAFEMODE]:
             rmdir(path_)
         op_counter = _merge_op_counts(op_counter, {'d_rm': 1})
 
@@ -537,7 +539,7 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
             log(flags, "Moving " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
                 ": " + old_path + "\nTo: " + new_path)
-            if not flags['safemode']:
+            if not flags[Flag.SAFEMODE]:
                 # Make sure parent directory exists.
                 if not path.isdir(new_dir):
                     makedirs(new_dir)
@@ -547,7 +549,7 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
             log(flags, "Renaming " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
                 ": " + old_path + "\nTo: " + new_path)
-        if not flags['safemode']:
+        if not flags[Flag.SAFEMODE]:
             # If only case has been changed do temp move (Samba compatibility).
             if old_path.lower() == new_path.lower():
                 rename(old_path, old_path + "_temp")
@@ -563,7 +565,7 @@ def _remove_file(flags, dir_path, file_, file_type=None):
     log(flags, "Removing " + (
         file_type + " " if file_type is not None else "") + "file: " +
         path.join(dir_path, file_))
-    if not flags['safemode']:
+    if not flags[Flag.SAFEMODE]:
         remove(path.join(dir_path, file_))
 
     return {'f_rm': 1}
@@ -597,7 +599,7 @@ def _extract_and_clean_archives(flags, root_dir):
 def _extract_rar(flags, dir_path, main_file):
     """ Extracts a .rar archive. """
     log(flags, "Extracting archive: " + path.join(dir_path, main_file))
-    if not flags['safemode']:
+    if not flags[Flag.SAFEMODE]:
         # Set to '/' to be more compatible with zipfile
         rarfile.PATH_SEP = '/'
         # Open rar archive.
@@ -616,7 +618,7 @@ def _remove_archive(flags, dir_path, main_file):
             op_counter = _merge_op_counts(op_counter, {'f_rm': 1})
             log(flags, "Removing archive file: " +
                 path.join(dir_path, file_))
-            if not flags['safemode']:
+            if not flags[Flag.SAFEMODE]:
                 remove(path.join(dir_path, file_))
     return op_counter
 
@@ -659,7 +661,7 @@ def _print_op_count(flags, op_count):
     if op_count is not None:
         # Check that it's not empty.
         log(flags, "Operation count " +
-            ("(safemode/not executed):" if flags['safemode'] else ":"),
+            ("(safemode/not executed):" if flags[Flag.SAFEMODE] else ":"),
             TextType.INFO)
         log(flags, _format_op_count(op_count), TextType.INFO)
     else:
@@ -732,17 +734,17 @@ def log(flags, msg, type_=TextType.STD):
     Default priority is 0 which only prints if verbose, 1 always prints.
     """
     # Always print error messages and similar.
-    if (type_[1] >= 2) or flags['verbose'] \
-            or (not flags['quiet'] and type_[1] == 1):
-        if flags['color']:
+    if (type_[1] >= 2) or flags[Flag.VERBOSE] \
+            or (not flags[Flag.QUIET] and type_[1] == 1):
+        if flags[Flag.COLOR]:
             _print_format(msg, type_[0])
         else:
             print(msg)
 
 
-def log_err(msg):
+def log_err(flags, msg):
     """ Prints an error message regardless of mode. """
-    log({'color': False}, msg, TextType.ERR)
+    log(flags, msg, TextType.ERR)
 
 
 def log_success(flags):
