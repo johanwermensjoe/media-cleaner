@@ -19,7 +19,7 @@ _Description: Path of the config file:
  .
  The structure in the tv-serie root folder is expected to follow:
    <root folder>/<tv-serie name>/*
- The struecture in the move root folder can be arbitrary.
+ The struecture in the movie root folder can be arbitrary.
 
 Template: media-cleaner/scheduling_interval
 Type: select

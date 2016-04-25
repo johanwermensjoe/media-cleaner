@@ -57,7 +57,7 @@ msgstr ""
 #: ../templates:2001
 msgid ""
 "path:\n"
-"  tv: <your path to the tv-serie root folder>\n"
+"  tv: <your path to the tv-series root folder>\n"
 "  movie: <your path to the movie root folder>"
 msgstr ""
 
@@ -65,9 +65,9 @@ msgstr ""
 #. Description
 #: ../templates:2001
 msgid ""
-"The structure in the tv-serie root folder is expected to follow:\n"
-"  <root folder>/<tv-serie name>/*\n"
-"The struecture in the move root folder can be arbitrary."
+"The structure in the tv-series root folder is expected to follow:\n"
+"  <root folder>/<tv-series name>/*\n"
+"The struecture in the movie root folder can be arbitrary."
 msgstr ""
 
 #. Type: select
@@ -115,5 +115,5 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../templates:4001
-msgid "The user needs to have rw priviliges in the media libraries."
+msgid "The user needs to have r/w priviliges in the media libraries."
 msgstr ""

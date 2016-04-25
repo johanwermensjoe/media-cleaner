@@ -61,19 +61,19 @@ msgstr ""
 #: ../templates:2001
 msgid ""
 "path:\n"
-"  tv: <your path to the tv-serie root folder>\n"
+"  tv: <your path to the tv-series root folder>\n"
 "  movie: <your path to the movie root folder>"
 msgstr ""
 "path:\n"
 "  tv: <sökvägen till tv-serie root mappen>\n"
-"  movie: <sökvägen till the movie root mappen>"
+"  movie: <sökvägen till film root mappen>"
 
 #. Type: string
 #. Description
 #: ../templates:2001
 msgid ""
-"The structure in the tv-serie root folder is expected to follow:\n"
-"  <root folder>/<tv-serie name>/*\n"
+"The structure in the tv-series root folder is expected to follow:\n"
+"  <root folder>/<tv-series name>/*\n"
 "The struecture in the move root folder can be arbitrary."
 msgstr ""
 "Strukturen i rootmappen för tv-serier antas vara den följande:\n"
@@ -125,5 +125,5 @@ msgstr "Användaren (namn) för att köra den schemalagda städningen:"
 #. Type: string
 #. Description
 #: ../templates:4001
-msgid "The user needs to have rw priviliges in the media libraries."
-msgstr "Användaren bör ha skriv/läs rättigheter i media biblioteken."
+msgid "The user needs to have r/w priviliges in the media libraries."
+msgstr "Användaren bör ha läs/skriv rättigheter i media biblioteken."
