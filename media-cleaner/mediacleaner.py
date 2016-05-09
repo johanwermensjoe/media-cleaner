@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TODO Handle premission exceptions.
 """
 mediacleaner module:
 The main media-cleaner script.
