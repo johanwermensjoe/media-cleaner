@@ -658,7 +658,7 @@ def _format_op_count(op_count):
 
 def _print_op_count(flags, op_count):
     """ Prints an operation count summary. """
-    if op_count is not None:
+    if len(op_count.keys()) > 0:
         # Check that it's not empty.
         log(flags, "Operation count " +
             ("(safemode/not executed):" if flags[Flag.SAFEMODE] else ":"),
