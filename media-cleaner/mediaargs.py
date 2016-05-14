@@ -23,3 +23,4 @@ class Option(Enum):
     CONFIG = 'config'
     MOVIE_DIR = 'movie-dir'
     TV_SERIES_DIR = 'tv-dir'
+    SHOW_OPTIONS = 'showoptions'

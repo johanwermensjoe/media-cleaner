@@ -308,7 +308,6 @@ def get_value_from_yaml(file_path, root_tree, branch):
 def _clean_duplicates(flags, dir_path):
     """ Removes the least wanted duplicate main files. """
     op_counter = {}
-    # print "Dup: " + dir_path
     # Get all main files in directory.
     main_files = []
     for file_ in listdir(dir_path):
@@ -516,10 +515,13 @@ def _remove_empty_folders(flags, path_, remove_root=True):
     files = listdir(path_)
     if len(files) == 0 and remove_root:
         log(flags, "Removing empty folder:" + path_)
-        if not flags[Flag.SAFEMODE]:
-            rmdir(path_)
-        op_counter = _merge_op_counts(op_counter, {'d_rm': 1})
-
+        try:
+            if not flags[Flag.SAFEMODE]:
+                rmdir(path_)
+            op_counter = _merge_op_counts(op_counter, {'d_rm': 1})
+        except OSError:
+            log_err(flags, "Error while removing directory: {}".format(path_))
+            op_counter = _merge_op_counts(op_counter, {'err': 1})
     return op_counter
 
 
@@ -535,28 +537,36 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
         # Check if the file/dir is being moved or just renamed.
         if old_dir != new_dir:
             # Move
-            op_counter = {('f_m' if path.isfile(old_path) else 'd_m'): 1}
             log(flags, "Moving " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
                 ": " + old_path + "\nTo: " + new_path)
-            if not flags[Flag.SAFEMODE]:
-                # Make sure parent directory exists.
-                if not path.isdir(new_dir):
-                    makedirs(new_dir)
+            try:
+                if not flags[Flag.SAFEMODE]:
+                    # Make sure parent directory exists.
+                    if not path.isdir(new_dir):
+                        makedirs(new_dir)
+                op_counter = {('f_m' if path.isfile(old_path) else 'd_m'): 1}
+            except OSError:
+                log_err(flags, "Error while moving file/directory: {}".
+                        format(old_path))
         else:
             # Rename
-            op_counter = {('f_r' if path.isfile(old_path) else 'd_r'): 1}
             log(flags, "Renaming " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
                 ": " + old_path + "\nTo: " + new_path)
-        if not flags[Flag.SAFEMODE]:
-            # If only case has been changed do temp move (Samba compatibility).
-            if old_path.lower() == new_path.lower():
-                rename(old_path, old_path + "_temp")
-                old_path += "_temp"
-            # Do the move/rename.
-            rename(old_path, new_path)
-
+            try:
+                if not flags[Flag.SAFEMODE]:
+                    # If only case has been changed do temp move (Samba comp).
+                    if old_path.lower() == new_path.lower():
+                        rename(old_path, old_path + "_temp")
+                        old_path += "_temp"
+                    # Do the move/rename.
+                    rename(old_path, new_path)
+                op_counter = {('f_r' if path.isfile(old_path) else 'd_r'): 1}
+            except OSError:
+                log_err(flags, "Error while moving file/directory: {}".
+                        format(old_path))
+                op_counter = _merge_op_counts(op_counter, {'err': 1})
     return op_counter
 
 
@@ -565,10 +575,14 @@ def _remove_file(flags, dir_path, file_, file_type=None):
     log(flags, "Removing " + (
         file_type + " " if file_type is not None else "") + "file: " +
         path.join(dir_path, file_))
-    if not flags[Flag.SAFEMODE]:
-        remove(path.join(dir_path, file_))
-
-    return {'f_rm': 1}
+    try:
+        if not flags[Flag.SAFEMODE]:
+            remove(path.join(dir_path, file_))
+        return {'f_rm': 1}
+    except OSError:
+        log_err(flags, "Error while removing file: {}".
+                format(path.join(dir_path, file_)))
+        return {'err': 1}
 
 
 ##########################################################
@@ -599,28 +613,35 @@ def _extract_and_clean_archives(flags, root_dir):
 def _extract_rar(flags, dir_path, main_file):
     """ Extracts a .rar archive. """
     log(flags, "Extracting archive: " + path.join(dir_path, main_file))
-    if not flags[Flag.SAFEMODE]:
-        # Set to '/' to be more compatible with zipfile
-        rarfile.PATH_SEP = '/'
-        # Open rar archive.
-        r_file = RarFile(path.join(dir_path, main_file))
-        r_file.extractall(dir_path)
-        r_file.close()
-    return {'a_e': 1}
+    try:
+        if not flags[Flag.SAFEMODE]:
+            # Set to '/' to be more compatible with zipfile
+            rarfile.PATH_SEP = '/'
+            # Open rar archive.
+            with RarFile(path.join(dir_path, main_file)) as r_file:
+                r_file.extractall(dir_path)
+        return {'a_e': 1}
+    except rarfile.Error:
+        log_err(flags, "Error while extracting archive: {}".
+                format(path.join(dir_path, main_file)))
+        return {'err': 1}
 
 
 def _remove_archive(flags, dir_path, main_file):
     """ Removes all archive files belonging to and including the main file. """
-    op_counter = {}
-
     for file_ in listdir(dir_path):
         if _is_compressed_file(file_) and main_file[:-4] in file_:
-            op_counter = _merge_op_counts(op_counter, {'f_rm': 1})
             log(flags, "Removing archive file: " +
                 path.join(dir_path, file_))
-            if not flags[Flag.SAFEMODE]:
-                remove(path.join(dir_path, file_))
-    return op_counter
+            try:
+                if not flags[Flag.SAFEMODE]:
+                    remove(path.join(dir_path, file_))
+                return {'f_rm': 1}
+            except OSError:
+                log_err(flags, "Error while removing archive: {}".
+                        format(path.join(dir_path, main_file)))
+                return {'err': 1}
+    return {}
 
 
 ##########################################################
@@ -635,7 +656,8 @@ _OP_KEYS = ['a_e',
             'f_m',
             'd_rm',
             'd_r',
-            'd_m']
+            'd_m',
+            'err']
 
 _OP_VALUES = ["Archive extraction",
               "File remove",
@@ -643,22 +665,22 @@ _OP_VALUES = ["Archive extraction",
               "File move",
               "Directory remove",
               "Directory rename",
-              "Directory move"]
+              "Directory move",
+              "Error"]
 
 
 def _format_op_count(op_count):
     """ Formats an operation count """
     f_str = []
-    for i in range(0, len(_OP_KEYS)):
-        k = _OP_KEYS[i]
-        if k in op_count:
-            f_str.append("- " + _OP_VALUES[i] + ": " + str(op_count[k]))
+    for i, key in enumerate(_OP_KEYS):
+        if key in op_count:
+            f_str.append("- " + _OP_VALUES[i] + ": " + str(op_count[key]))
     return "\n".join(f_str)
 
 
 def _print_op_count(flags, op_count):
     """ Prints an operation count summary. """
-    if op_count is not None:
+    if len(op_count.keys()) > 0:
         # Check that it's not empty.
         log(flags, "Operation count " +
             ("(safemode/not executed):" if flags[Flag.SAFEMODE] else ":"),
@@ -675,7 +697,6 @@ def _merge_op_counts(op_count1, op_count2):
             op_count1[key] += val
         else:
             op_count1[key] = val
-
     return op_count1
 
 
