@@ -3,7 +3,7 @@
 mediacleaner module:
 The main media-cleaner script.
 """
-from argparse import ArgumentParser
+from argparse import ArgumentParser, SUPPRESS
 from time import strftime
 
 from delugetools import has_active_torrents
@@ -11,7 +11,7 @@ from mediaargs import Flag, Option
 from mediatools import log, TextType, clean_tv, log_err, clean_movie, \
     get_value_from_yaml
 
-__version__ = "1.3"
+__version__ = "1.4"
 
 
 def clean(flags, options):
@@ -97,6 +97,9 @@ def parse_args_and_execute():
     parser.add_argument('--config',
                         help='path to the yaml file containing media paths')
 
+    # Hidden options.
+    parser.add_argument('--show-options', action='store_true', help=SUPPRESS)
+
     args = parser.parse_args()
     flags = {Flag.SAFEMODE: args.safemode,
              Flag.VERBOSE: args.verbose,
@@ -110,7 +113,8 @@ def parse_args_and_execute():
                Option.MOVIE: args.movie,
                Option.CONFIG: args.config,
                Option.MOVIE_DIR: args.movie_dir,
-               Option.TV_SERIES_DIR: args.tv_dir}
+               Option.TV_SERIES_DIR: args.tv_dir,
+               Option.SHOW_OPTIONS: args.show_options}
 
     # Check path args.
     if options[Option.TV_SERIES] and options[Option.TV_SERIES_DIR] is None and \
@@ -127,6 +131,13 @@ def parse_args_and_execute():
     # Check if in cron-mode and write extra log info.
     if options[Option.VERSION]:
         log(flags, __version__, TextType.INFO)
+        quit()
+
+    # Show options.
+    if options[Option.SHOW_OPTIONS]:
+        print(" ".join(["--{}".format(o.value) for o in Option if
+                        o is not Option.SHOW_OPTIONS]))
+        # Always exit after listing options.
         quit()
 
     # Check if in cron-mode and write extra log header info.
