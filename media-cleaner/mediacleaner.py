@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# TODO Handle premission exceptions.
 """
 mediacleaner module:
 The main media-cleaner script.
@@ -12,7 +11,7 @@ from mediaargs import Flag, Option
 from mediatools import log, TextType, clean_tv, log_err, clean_movie, \
     get_value_from_yaml
 
-__version__ = "1.3"
+__version__ = "1.4"
 
 
 def clean(flags, options):
