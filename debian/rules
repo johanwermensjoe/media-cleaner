@@ -19,7 +19,7 @@
 
 # Main packaging script.
 %:
-	dh $@ --with python3,bash-completion
+	dh $@ --with bash-completion --with python3
 
 override_dh_auto_clean:
 	dh_auto_clean
