@@ -1,8 +1,14 @@
+media-cleaner (1.5-3~ppa1) xenial; urgency=low
+
+  * Fixed remove log dir bug.
+
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Mon, 16 May 2016 01:29:12 +0200
+
 media-cleaner (1.5-2~ppa1) xenial; urgency=low
 
   * Fixed group spec. cron command.
 
- -- Johan Wermensjö <johanwermensjoe@gmail.com>  Sun, 16 May 2016 00:56:12 +0200
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Mon, 16 May 2016 00:56:12 +0200
 
 media-cleaner (1.5-1~ppa1) xenial; urgency=low
 
