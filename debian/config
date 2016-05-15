@@ -15,4 +15,14 @@ if [ "$RET" = "true" ]; then
     db_input high media-cleaner/scheduling_interval || true
     db_input high media-cleaner/cron_user || true
     db_go
+    
+    # Check if the user wants a specific group to be used.
+    db_input medium media-cleaner/want_scheduling || true
+    db_go
+    
+    db_get media-cleaner/want_group
+    if [ "$RET" = "true" ]; then
+        db_input high media-cleaner/cron_group || true
+        db_go
+    fi
 fi

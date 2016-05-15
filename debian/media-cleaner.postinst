@@ -21,7 +21,16 @@ if [ "$RET" = "true" ]; then
         schedulingInterval="@daily"
     fi
     db_get media-cleaner/cron_user
-    echo "$schedulingInterval $RET /usr/bin/media-cleaner -vCtm --config $configPath >> /var/log/media-cleaner/media-cleaner.log 2>&1" > /etc/cron.d/media-cleaner
+    $user = $RET
+    
+    # Check a specific group should be used.
+    db_get media-cleaner/want_group
+    if [ "$RET" = "true" ]; then
+        db_get media-cleaner/cron_group
+        echo "$schedulingInterval $user /usr/bin/sg $RET /usr/bin/media-cleaner -vCtm --config $configPath >> /var/log/media-cleaner/media-cleaner.log 2>&1" > /etc/cron.d/media-cleaner
+    else
+        echo "$schedulingInterval $user /usr/bin/media-cleaner -vCtm --config $configPath >> /var/log/media-cleaner/media-cleaner.log 2>&1" > /etc/cron.d/media-cleaner
+    fi
 fi
 
 # Give sufficient premissions for log storage.
