@@ -2,7 +2,4 @@
 
 #DEBHELPER#
 
-# Remove log directory.
-rm -rf /var/log/media-cleaner
-
 exit 0
