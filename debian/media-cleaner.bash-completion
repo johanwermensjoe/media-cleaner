@@ -16,7 +16,7 @@ _media_cleaner()
     if [[ ${cur_word} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${option_list}" -- ${cur_word}) )
     else
-        COMPREPLY=()
+        _filedir
     fi
     return 0 
 }
