@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: media-cleaner\n"
 "Report-Msgid-Bugs-To: media-cleaner@packages.debian.org\n"
-"POT-Creation-Date: 2015-10-26 03:05+0100\n"
+"POT-Creation-Date: 2016-05-15 21:37+0200\n"
 "PO-Revision-Date: 2015-10-18 15:45+0200\n"
 "Last-Translator: N/A <N/A>\n"
 "Language-Team: Swedish <LL@li.org>\n"
@@ -74,7 +74,7 @@ msgstr ""
 msgid ""
 "The structure in the tv-series root folder is expected to follow:\n"
 "  <root folder>/<tv-series name>/*\n"
-"The struecture in the move root folder can be arbitrary."
+"The struecture in the movie root folder can be arbitrary."
 msgstr ""
 "Strukturen i rootmappen för tv-serier antas vara den följande:\n"
 "  <rootmapp>/<tv-serie namn>/*\n"
@@ -82,7 +82,9 @@ msgstr ""
 
 #. Type: select
 #. Choices
-#: ../templates:3001
+#. Type: select
+#. Default
+#: ../templates:3001 ../templates:3002
 msgid "1h"
 msgstr "1t"
 
@@ -106,13 +108,13 @@ msgstr "1d"
 
 #. Type: select
 #. Description
-#: ../templates:3002
+#: ../templates:3003
 msgid "The interval at which to schedule the cleaning:"
 msgstr "Intervallet för att schemalägga städing:"
 
 #. Type: select
 #. Description
-#: ../templates:3002
+#: ../templates:3003
 msgid "The interval is used in a cron job."
 msgstr "Intervallet används i ett cron job."
 
@@ -127,3 +129,32 @@ msgstr "Användaren (namn) för att köra den schemalagda städningen:"
 #: ../templates:4001
 msgid "The user needs to have r/w priviliges in the media libraries."
 msgstr "Användaren bör ha läs/skriv rättigheter i media biblioteken."
+
+#. Type: boolean
+#. Description
+#: ../templates:5001
+msgid "Do you want to use a specific group when cleaning?"
+msgstr "Vill du använda en specifik grupp för städning?"
+
+#. Type: boolean
+#. Description
+#: ../templates:5001
+
+msgid "If not specified, the default group for the user is used."
+msgstr "Om ej specificerat används standardgruppen för anändaren."
+
+#. Type: string
+#. Description
+#: ../templates:6001
+msgid "The group(name) to run the scheduled task:"
+msgstr "Gruppen (namn) för att köra den schemalagda städningen:"
+
+#. Type: string
+#. Description
+#: ../templates:6001
+msgid ""
+"The group need to have r/w priviliges in the media libraries, if the user "
+"does not."
+msgstr ""
+"Gruppen bör ha läs/skriv rättigheter i media biblioteken, om inte användaren "
+"har det."

@@ -1,6 +1,6 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# This file is distributed under the same license as the media-cleaner package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: media-cleaner\n"
 "Report-Msgid-Bugs-To: media-cleaner@packages.debian.org\n"
-"POT-Creation-Date: 2015-10-26 03:05+0100\n"
+"POT-Creation-Date: 2016-05-15 21:37+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -72,7 +72,9 @@ msgstr ""
 
 #. Type: select
 #. Choices
-#: ../templates:3001
+#. Type: select
+#. Default
+#: ../templates:3001 ../templates:3002
 msgid "1h"
 msgstr ""
 
@@ -96,13 +98,13 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../templates:3002
+#: ../templates:3003
 msgid "The interval at which to schedule the cleaning:"
 msgstr ""
 
 #. Type: select
 #. Description
-#: ../templates:3002
+#: ../templates:3003
 msgid "The interval is used in a cron job."
 msgstr ""
 
@@ -116,4 +118,30 @@ msgstr ""
 #. Description
 #: ../templates:4001
 msgid "The user needs to have r/w priviliges in the media libraries."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../templates:5001
+msgid "Do you want to use a specific group when cleaning?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../templates:5001
+msgid "If not specified, the default group for the user is used."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../templates:6001
+msgid "The group(name) to run the scheduled task:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../templates:6001
+msgid ""
+"The group need to have r/w priviliges in the media libraries, if the user "
+"does not."
 msgstr ""

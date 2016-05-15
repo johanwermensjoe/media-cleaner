@@ -1,6 +1,6 @@
 Template: media-cleaner/want_scheduling
 Type: boolean
-Description: Do you want to setup scheduled cleaning?
+_Description: Do you want to setup scheduled cleaning?
  A scheduled task can be created to run in the background
  and periodically clean the media files without user interaction.
  .
@@ -8,38 +8,38 @@ Description: Do you want to setup scheduled cleaning?
 
 Template: media-cleaner/config_path
 Type: string
-Description: Path of the config file:
+_Description: Path of the config file:
  The config file is used to provide a singular access point
  for all media paths and library locations. It should be a YAML
  file (.yml) and be formatted as follows:
  .
  path:
-   tv: <your path to the tv-serie root folder>
+   tv: <your path to the tv-series root folder>
    movie: <your path to the movie root folder>
  .
- The structure in the tv-serie root folder is expected to follow:
-   <root folder>/<tv-serie name>/*
+ The structure in the tv-series root folder is expected to follow:
+   <root folder>/<tv-series name>/*
  The struecture in the movie root folder can be arbitrary.
 
 Template: media-cleaner/scheduling_interval
 Type: select
-Choices: 1h, 2h, 5h, 1d
-Default: 1h
-Description: The interval at which to schedule the cleaning:
+__Choices: 1h, 2h, 5h, 1d
+__Default: 1h
+_Description: The interval at which to schedule the cleaning:
  The interval is used in a cron job.
 
 Template: media-cleaner/cron_user
 Type: string
-Description: The user(name) to run the scheduled task:
+_Description: The user(name) to run the scheduled task:
  The user needs to have r/w priviliges in the media libraries.
 
 Template: media-cleaner/want_group
 Type: boolean
-Description: Do you want to use a specific group when cleaning?
- If not specified, the default group is used.
+_Description: Do you want to use a specific group when cleaning?
+ If not specified, the default group for the user is used.
 
 Template: media-cleaner/cron_group
 Type: string
-Description: The group(name) to run the scheduled task:
+_Description: The group(name) to run the scheduled task:
  The group need to have r/w priviliges in the media libraries,
  if the user does not.
