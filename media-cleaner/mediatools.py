@@ -60,25 +60,32 @@ def clean_movie(flags, root_dir):
         # Set the movie to walk through.
         current_dir = path.join(root_dir, movie_name)
 
-        # Go through files in movies folder and check path.
-        for dir_path, _, files in walk(current_dir):
-            for file_ in files:
-                # Check if main file.
-                if _is_main_file(file_, dir_path):
-                    # Clean tv main file name.
-                    op_counter = _merge_op_counts(op_counter,
-                                                  _clean_movie_main_file(
-                                                      flags, dir_path, file_,
-                                                      current_dir, movie_name))
-                else:
-                    op_counter = _merge_op_counts(op_counter,
-                                                  _clean_other_file(
-                                                      flags, current_dir,
-                                                      dir_path, file_))
+        # Check that movie is in a directory.
+        if path.isdir(current_dir):
+            # Go through files in movies folder and check path.
+            for dir_path, _, files in walk(current_dir):
+                for file_ in files:
+                    # Check if main file.
+                    if _is_main_file(file_, dir_path):
+                        # Clean tv main file name.
+                        op_counter = _merge_op_counts(op_counter,
+                                                      _clean_movie_main_file(
+                                                          flags, dir_path,
+                                                          file_,
+                                                          current_dir,
+                                                          movie_name))
+                    else:
+                        op_counter = _merge_op_counts(op_counter,
+                                                      _clean_other_file(
+                                                          flags, current_dir,
+                                                          dir_path, file_))
 
-        # Delete duplicate main files.
-        op_counter = _merge_op_counts(op_counter,
-                                      _clean_duplicates(flags, current_dir))
+            # Delete duplicate main files.
+            op_counter = _merge_op_counts(op_counter,
+                                          _clean_duplicates(flags, current_dir))
+        else:
+            log_err(flags, "Skipping, movie not in directory: {}".
+                    format(current_dir))
 
     _finish_cleanup(flags, op_counter, root_dir)
 
@@ -201,7 +208,7 @@ def _is_subtitle_file(file_):
 
 def _is_sample_file(file_, path_):
     """ Checks if a file is a video sample file. """
-    match_ = match(r'''(?i).*(?:\W+Sample(?:\W+|\d+))''', file_)
+    match_ = match(r'''(?i)(?:(?:^|.*\W+)Sample(?:\W+|\d+))''', file_)
     return path.getsize(path.join(path_, file_)) < _MIN_VIDEO_SIZE or \
            (match_ is not None and
             path.getsize(path.join(path_, file_)) < _MIN_MAIN_VIDEO_SIZE)
@@ -540,33 +547,33 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
             log(flags, "Moving " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
                 ": " + old_path + "\nTo: " + new_path)
-            try:
-                if not flags[Flag.SAFEMODE]:
+            op_counter = {('f_m' if path.isfile(old_path) else 'd_m'): 1}
+            if not flags[Flag.SAFEMODE]:
+                try:
                     # Make sure parent directory exists.
                     if not path.isdir(new_dir):
                         makedirs(new_dir)
-                op_counter = {('f_m' if path.isfile(old_path) else 'd_m'): 1}
-            except OSError:
-                log_err(flags, "Error while moving file/directory: {}".
-                        format(old_path))
+                except OSError:
+                    log_err(flags, "Error while moving file/directory: {}".
+                            format(old_path))
         else:
             # Rename
             log(flags, "Renaming " + file_dir_type +
                 (" file" if path.isfile(old_path) else " directory") +
                 ": " + old_path + "\nTo: " + new_path)
+            op_counter = {('f_r' if path.isfile(old_path) else 'd_r'): 1}
+        if not flags[Flag.SAFEMODE]:
             try:
-                if not flags[Flag.SAFEMODE]:
-                    # If only case has been changed do temp move (Samba comp).
-                    if old_path.lower() == new_path.lower():
-                        rename(old_path, old_path + "_temp")
-                        old_path += "_temp"
-                    # Do the move/rename.
-                    rename(old_path, new_path)
-                op_counter = {('f_r' if path.isfile(old_path) else 'd_r'): 1}
+                # If only case has been changed do temp move (Samba comp).
+                if old_path.lower() == new_path.lower():
+                    rename(old_path, old_path + "_temp")
+                    old_path += "_temp"
+                # Do the move/rename.
+                rename(old_path, new_path)
             except OSError:
-                log_err(flags, "Error while moving file/directory: {}".
+                log_err(flags, "Error while renaming file/directory: {}".
                         format(old_path))
-                op_counter = _merge_op_counts(op_counter, {'err': 1})
+                op_counter = {'err': 1}
     return op_counter
 
 
@@ -682,8 +689,8 @@ def _print_op_count(flags, op_count):
     """ Prints an operation count summary. """
     if len(op_count.keys()) > 0:
         # Check that it's not empty.
-        log(flags, "Operation count " +
-            ("(safemode/not executed):" if flags[Flag.SAFEMODE] else ":"),
+        log(flags, "Operation count" +
+            (" (safemode/not executed):" if flags[Flag.SAFEMODE] else ":"),
             TextType.INFO)
         log(flags, _format_op_count(op_count), TextType.INFO)
     else:
