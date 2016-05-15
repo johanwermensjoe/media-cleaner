@@ -1,3 +1,14 @@
+media-cleaner (1.5-0~ppa1) xenial; urgency=low
+
+  * Updated bash-completion script and Standards-version.
+  * Updated cron config with group.
+  * Updated translations.
+  * Updated bash-completion with file completion.
+  * Imported Upstream version 1.5
+  * Fixed debconf scripts.
+
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Sun, 15 May 2016 22:39:53 +0200
+
 media-cleaner (1.4-0~ppa1) xenial; urgency=low
 
   * Fixed some translation errors.
