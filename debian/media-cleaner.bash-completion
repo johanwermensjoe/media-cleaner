@@ -12,12 +12,13 @@ _media_cleaner()
 
     option_list=`media-cleaner --show-options`
 
-    # Only perform completion if the current word starts with a dash ('-'). 
+    # Only perform completion if the current word starts with a dash ('-').
     if [[ ${cur_word} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${option_list}" -- ${cur_word}) )
     else
-        _filedir
+        COMPREPLY=( $(compgen -f -- ${cur_word}) )
     fi
-    return 0 
+    return 0
 }
-complete -F _media_cleaner media-cleaner
+complete -o filenames -F _media_cleaner media-cleaner
+
