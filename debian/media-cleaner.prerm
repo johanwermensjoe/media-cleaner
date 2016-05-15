@@ -3,9 +3,6 @@
 # Remove cron job if installed.
 rm -f /etc/cron.d/media-cleaner
 
-# Remove log directory.
-rm -rf /var/log/media-cleaner
-
 #DEBHELPER#
 
 exit 0
