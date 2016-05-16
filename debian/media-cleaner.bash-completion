@@ -10,11 +10,13 @@ _media_cleaner()
     cur_word="${COMP_WORDS[COMP_CWORD]}"
     prev_word="${COMP_WORDS[COMP_CWORD-1]}"
 
+    flag_list=`media-cleaner --show-flags`
     option_list=`media-cleaner --show-options`
+    fl_opt_list="$flag_list $option_list"
 
     # Only perform completion if the current word starts with a dash ('-').
     if [[ ${cur_word} == -* ]] ; then
-        COMPREPLY=( $(compgen -W "${option_list}" -- ${cur_word}) )
+        COMPREPLY=( $(compgen -W "${fl_opt_list}" -- ${cur_word}) )
     else
         COMPREPLY=( $(compgen -f -- ${cur_word}) )
     fi
