@@ -99,6 +99,8 @@ def parse_args_and_execute():
                         help='path to the yaml file containing media paths')
 
     # Hidden options.
+    parser.add_argument('--{}'.format(Option.SHOW_FLAGS.value),
+                        action='store_true', help=SUPPRESS)
     parser.add_argument('--{}'.format(Option.SHOW_OPTIONS.value),
                         action='store_true', help=SUPPRESS)
 
@@ -116,7 +118,27 @@ def parse_args_and_execute():
                Option.CONFIG: args.config,
                Option.MOVIE_DIR: args.movie_dir,
                Option.TV_SERIES_DIR: args.tv_dir,
+               Option.SHOW_FLAGS: args.show_flags,
                Option.SHOW_OPTIONS: args.show_options}
+
+    # Check if in cron-mode and write extra log info.
+    if options[Option.VERSION]:
+        log(flags, __version__, TextType.INFO)
+        quit()
+
+    # Show flags.
+    if options[Option.SHOW_FLAGS]:
+        print(" ".join(["--{}".format(f.value) for f in Flag]))
+        # Always exit after listing flags.
+        quit()
+
+    # Show options.
+    if options[Option.SHOW_OPTIONS]:
+        print(" ".join(["--{}".format(o.value) for o in Option if
+                        o is not Option.SHOW_FLAGS and
+                        o is not Option.SHOW_OPTIONS]))
+        # Always exit after listing options.
+        quit()
 
     # Check path args.
     if options[Option.TV_SERIES] and options[Option.TV_SERIES_DIR] is None and \
@@ -130,18 +152,6 @@ def parse_args_and_execute():
         log(flags, "No path set for movie library, see --{} or --{}".
             format(Option.MOVIE_DIR.value, Option.CONFIG.value),
             TextType.INFO)
-        quit()
-
-    # Check if in cron-mode and write extra log info.
-    if options[Option.VERSION]:
-        log(flags, __version__, TextType.INFO)
-        quit()
-
-    # Show options.
-    if options[Option.SHOW_OPTIONS]:
-        print(" ".join(["--{}".format(o.value) for o in Option if
-                        o is not Option.SHOW_OPTIONS]))
-        # Always exit after listing options.
         quit()
 
     # Check if in cron-mode and write extra log header info.
