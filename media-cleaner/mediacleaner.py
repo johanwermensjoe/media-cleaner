@@ -37,7 +37,7 @@ def clean(flags, options):
             # Get path from yaml file.
             root_dir = get_value_from_yaml(options[Option.CONFIG],
                                            "path", "movie")
-        log(flags, "\nRunning movie cleanup script on: " + root_dir,
+        log(flags, "\nRunning movie cleanup script on: {}".format(root_dir),
             TextType.INFO)
         clean_movie(flags, root_dir)
 
@@ -47,11 +47,10 @@ def clean(flags, options):
             root_dir = options[Option.TV_SERIES_DIR]
         else:
             # Get path from yaml file.
-            root_dir = get_value_from_yaml(options[Option.CONFIG],
-                                           "path", "tv")
+            root_dir = get_value_from_yaml(options[Option.CONFIG], "path", "tv")
 
-        log(flags, "\nRunning tv-series cleanup script on: " +
-            root_dir, TextType.INFO)
+        log(flags, "\nRunning tv-series cleanup script on: {}".format(root_dir),
+            TextType.INFO)
         clean_tv(flags, root_dir)
 
     # Check if in cron-mode and write extra log info.
@@ -67,38 +66,41 @@ def parse_args_and_execute():
     # Parse arguments.
     parser = ArgumentParser(description='Cleans and renames media files.')
 
-    parser.add_argument('-V', '--version', action='store_true',
-                        help='shows the version')
+    parser.add_argument('-V', '--{}'.format(Option.VERSION.value),
+                        action='store_true', help='shows the version')
 
     group_vq = parser.add_mutually_exclusive_group()
-    group_vq.add_argument('-v', '--verbose', action='store_true',
-                          help='enables verbose mode')
-    group_vq.add_argument("-q", "--quiet", action="store_true",
-                          help='enables quiet mode')
-    parser.add_argument('-c', '--color', action='store_true',
-                        help='enables colored log output')
-    parser.add_argument('-C', '--cron', action='store_true',
+    group_vq.add_argument('-v', '--{}'.format(Flag.VERBOSE.value),
+                          action='store_true', help='enables verbose mode')
+    group_vq.add_argument('-q', '--{}'.format(Flag.QUIET.value),
+                          action="store_true", help='enables quiet mode')
+    parser.add_argument('-c', '--{}'.format(Flag.COLOR.value),
+                        action='store_true', help='enables colored log output')
+    parser.add_argument('-s', '--{}'.format(Flag.SAFEMODE.value),
+                        action='store_true', help='disables any file changes')
+    parser.add_argument('-C', '--{}'.format(Option.CRON.value),
+                        action='store_true',
                         help='enables cron mode with extra log output')
 
-    parser.add_argument('-s', '--safemode', action='store_true',
-                        help='disables any file changes')
-    parser.add_argument('-f', '--force', action='store_true',
+    parser.add_argument('-f', '--{}'.format(Option.FORCE.value),
+                        action='store_true',
                         help='force clean and ignore torrent activity')
 
-    parser.add_argument('-t', '--tv', action='store_true',
-                        help='clean tv-series directory')
-    parser.add_argument('-m', '--movie', action='store_true',
-                        help='clean movie directory')
-    parser.add_argument('--movie-dir',
+    parser.add_argument('-t', '--{}'.format(Option.TV_SERIES.value),
+                        action='store_true', help='clean tv-series directory')
+    parser.add_argument('-m', '--{}'.format(Option.MOVIE.value),
+                        action='store_true', help='clean movie directory')
+    parser.add_argument('--{}'.format(Option.MOVIE_DIR.value),
                         help='path to movie directory')
-    parser.add_argument('--tv-dir',
+    parser.add_argument('--{}'.format(Option.TV_SERIES_DIR.value),
                         help='path to tv-series directory')
 
-    parser.add_argument('--config',
+    parser.add_argument('--{}'.format(Option.CONFIG.value),
                         help='path to the yaml file containing media paths')
 
     # Hidden options.
-    parser.add_argument('--show-options', action='store_true', help=SUPPRESS)
+    parser.add_argument('--{}'.format(Option.SHOW_OPTIONS.value),
+                        action='store_true', help=SUPPRESS)
 
     args = parser.parse_args()
     flags = {Flag.SAFEMODE: args.safemode,
@@ -119,13 +121,15 @@ def parse_args_and_execute():
     # Check path args.
     if options[Option.TV_SERIES] and options[Option.TV_SERIES_DIR] is None and \
             not options[Option.CONFIG]:
-        log(flags, "No path set for tv library, see --tv-dir or --config",
+        log(flags, "No path set for tv library, see --{} or --{}".
+            format(Option.TV_SERIES_DIR.value, Option.CONFIG.value),
             TextType.INFO)
         quit()
     if options[Option.MOVIE] and options[Option.MOVIE_DIR] is None and \
             not options[Option.CONFIG]:
-        log(flags, "No path set for movie library, see " +
-            "--movie-dir or --config", TextType.INFO)
+        log(flags, "No path set for movie library, see --{} or --{}".
+            format(Option.MOVIE_DIR.value, Option.CONFIG.value),
+            TextType.INFO)
         quit()
 
     # Check if in cron-mode and write extra log info.
@@ -144,9 +148,8 @@ def parse_args_and_execute():
     if options[Option.CRON]:
         log(flags, "-" * 30, TextType.INFO)
 
-        log(flags,
-            "Running cleanup: {}\n".format(strftime("%a %Y-%m-%d %H:%M:%S")),
-            TextType.INFO)
+    log(flags, "Running cleanup: {}\n".format(strftime("%a %Y-%m-%d %H:%M:%S")),
+        TextType.INFO)
 
     # Check if torrent activity should be ignored.
     if options[Option.FORCE]:
