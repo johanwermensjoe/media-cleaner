@@ -1,3 +1,11 @@
+media-cleaner (1.6-0ppa1) xenial; urgency=low
+
+  * Updated bash-completion to include all options.
+  * Imported Upstream version 1.6
+  * Corrected version number.
+
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Mon, 16 May 2016 19:47:32 +0200
+
 media-cleaner (1.5-3~ppa1) xenial; urgency=low
 
   * Fixed remove log dir bug.
