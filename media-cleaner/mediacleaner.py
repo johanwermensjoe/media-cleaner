@@ -11,7 +11,7 @@ from mediaargs import Flag, Option
 from mediatools import log, TextType, clean_tv, log_err, clean_movie, \
     get_value_from_yaml
 
-__version__ = "1.6"
+__version__ = "1.7"
 
 
 def clean(flags, options):

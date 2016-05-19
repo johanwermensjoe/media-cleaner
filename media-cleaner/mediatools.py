@@ -38,9 +38,9 @@ def clean_movie(flags, root_dir):
                                           _move_file_dir(
                                               flags, path.join(root_dir,
                                                                movie_name),
-                                              path.join(path.join(
-                                                  root_dir, cleaned_movie_name),
-                                                  movie_name),
+                                              path.join(root_dir,
+                                                        cleaned_movie_name,
+                                                        movie_name),
                                               "movie"))
         else:
             op_counter = _merge_op_counts(op_counter,
@@ -101,36 +101,41 @@ def clean_tv(flags, root_dir):
         # Set the current series to walk through.
         current_dir = path.join(root_dir, series_name)
 
-        # Go through files in a series folder and check path.
-        for dir_path, _, files in walk(current_dir):
-            for file_ in files:
-                if _has_markers(file_) and \
-                        _is_main_file(file_, dir_path):
-                    # Clean tv main file name.
-                    op_counter = _merge_op_counts(op_counter,
-                                                  _clean_tv_main_file(
-                                                      flags, current_dir,
-                                                      dir_path, file_,
-                                                      series_name))
-                else:
-                    op_counter = _merge_op_counts(op_counter,
-                                                  _clean_other_file(flags,
-                                                                    current_dir,
-                                                                    dir_path,
-                                                                    file_))
-
-        for season in listdir(current_dir):
-            # A season directory.
-            season_dir = path.join(current_dir, season)
-            if path.isdir(season_dir):
-                for episode in listdir(season_dir):
-                    # An episode directory.
-                    episode_dir = path.join(season_dir, episode)
-                    if path.isdir(episode_dir):
-                        # Delete duplicate main files.
+        # If path is a directory, assume it is a proper tv series directory.
+        if path.isdir(current_dir):
+            # Go through files in a series folder and check path.
+            for dir_path, _, files in walk(current_dir):
+                for file_ in files:
+                    if _has_markers(file_) and \
+                            _is_main_file(file_, dir_path):
+                        # Clean tv main file name.
                         op_counter = _merge_op_counts(op_counter,
-                                                      _clean_duplicates(
-                                                          flags, episode_dir))
+                                                      _clean_tv_main_file(
+                                                          flags, current_dir,
+                                                          dir_path, file_,
+                                                          series_name))
+                    else:
+                        op_counter = _merge_op_counts(op_counter,
+                                                      _clean_other_file(
+                                                          flags, current_dir,
+                                                          dir_path, file_))
+
+            for season in listdir(current_dir):
+                # A season directory.
+                season_dir = path.join(current_dir, season)
+                if path.isdir(season_dir):
+                    for episode in listdir(season_dir):
+                        # An episode directory.
+                        episode_dir = path.join(season_dir, episode)
+                        if path.isdir(episode_dir):
+                            # Delete duplicate main files.
+                            op_counter = _merge_op_counts(op_counter,
+                                                          _clean_duplicates(
+                                                              flags,
+                                                              episode_dir))
+        else:
+            log_err(flags, "Skipping, tv-series not in directory: {}".
+                    format(current_dir))
 
     _finish_cleanup(flags, op_counter, root_dir)
 
@@ -208,7 +213,7 @@ def _is_subtitle_file(file_):
 
 def _is_sample_file(file_, path_):
     """ Checks if a file is a video sample file. """
-    match_ = match(r'''(?i)(?:(?:^|.*\W+)Sample(?:\W+|\d+))''', file_)
+    match_ = match(r'(?i)(?:(?:^|.*\W+)Sample(?:\W+|\d+))', file_)
     return path.getsize(path.join(path_, file_)) < _MIN_VIDEO_SIZE or \
            (match_ is not None and
             path.getsize(path.join(path_, file_)) < _MIN_MAIN_VIDEO_SIZE)
@@ -242,7 +247,7 @@ def _is_main_file(file_, path_):
 
 def _is_proper_main_file(file_):
     """ Checks if a file is a proper/repack etc. release. """
-    match_ = match(r'''(?i).*\W+(?:proper|repack|rerip|real)\W+''', file_)
+    match_ = match(r'(?i).*\W+(?:proper|repack|rerip|real)\W+', file_)
     return match_ is not None
 
 
@@ -253,7 +258,7 @@ def _is_valid_media_name(name):
 
 def _is_extras_file(file_, path_):
     """ Checks if a file is a extras file. """
-    match_ = match(r'''(?i).*(?:\W+extra\W+)''', file_)
+    match_ = match(r'(?i).*(?:\W+extra\W+)', file_)
     return (_is_video_file(file_) and not _is_sample_file(file_, path_) and
             ((path.getsize(path.join(path_, file_)) <
               _MIN_MAIN_VIDEO_SIZE and
@@ -271,7 +276,7 @@ def _get_season_num(file_):
     """ Extract the season number of a file. """
     # Check standard pattern S01E01
     match_ = search(
-        r'''(?i)(?:season|s)\s*(\d{1,2})|(\d{1,2})\s*x|^(\d)\s*\d{2}''', file_)
+        r'(?i)(?:season|s)\s*(\d{1,2})|(\d{1,2})\s*x|^(\d)\s*\d{2}', file_)
     if match_ is not None:
         if match_.group(1) is not None:
             return sub("^0+", "", match_.group(1))
@@ -284,7 +289,7 @@ def _get_season_num(file_):
 def _get_episode_num(file_):
     """ Extract the episode number of a file. """
     # Check standard pattern S01E01
-    match_ = search(r'''(?i)(?:episode|x|e)\s*(\d{1,2})|^\d(\d{2})''', file_)
+    match_ = search(r'(?i)(?:episode|x|e)\s*(\d{1,2})|^\d(\d{2})', file_)
     if match_ is not None:
         if match_.group(1) is not None:
             return sub("^0+", "", match_.group(1))
@@ -381,7 +386,7 @@ def _get_clean_tv_main_file_name(file_, series_name):
 
         # Name can be formatted.
         quality_match = search(
-            r'''(?i)(?:(?:episode|x|e)\s*(?:\d{1,2})|^\d{3})\W+(.*)\..{1,4}$''',
+            r'(?i)(?:(?:episode|x|e)\s*(?:\d{1,2})|^\d{3})\W+(.*)\..{1,4}$',
             file_)
         # Omit quality if not found
         if quality_match is not None:
@@ -404,6 +409,26 @@ def _get_clean_tv_main_file_name(file_, series_name):
     else:
         # Return the old name.
         return file_
+
+
+def _get_clean_tv_dir_name(episode_name):
+    """ Returns a cleaned movie directory name. """
+    match_ = match(
+        r'(?i)(^.*)(?:season|s)\s*(?:\d{1,2})|(?:\d{1,2})\s*x|^(?:\d)\s*\d{2}',
+        episode_name)
+    if match_ is not None:
+        name_year_match = match(r'(?i)(.*)\W[\[(]?(\d{4})[\])]?\W',
+                                match_.group(1))
+        # Format movie name into std format: "My Series", optional year.
+        if name_year_match is not None:
+            return sub(r'[._]+|\s+', " ",
+                       "{} ({})".format(name_year_match.group(1),
+                                        name_year_match.group(2)))
+        else:
+            return sub(r'[._]+|\s+', " ", match_.group(1))
+    else:
+        # Return the inputted name in case of pattern matching would fail.
+        return episode_name
 
 
 def _clean_movie_main_file(flags, dir_path, file_, movie_dir, movie_name):
@@ -434,10 +459,10 @@ def _get_clean_movie_main_file_name(file_, movie_name):
         Relies on names formatted in std movie dir format:
         - "My Movie (2015)".
     """
-    name_year_match = match(r'''(?i)(.*)\s[(](\d{4})[)]$''', movie_name)
+    name_year_match = match(r'(?i)(.*)\s[(](\d{4})[)]$', movie_name)
     # Extract quality string from file name.
     quality_match = search(
-        r'''(?i)(?:\W[\[(]?\d{4}[\])]?\W)(.*)\..{1,4}$''', file_)
+        r'(?i)(?:\W[\[(]?\d{4}[\])]?\W)(.*)\..{1,4}$', file_)
     # Omit quality if not found
     if quality_match is not None:
         quality = quality_match.group(1)
@@ -469,7 +494,7 @@ def _get_clean_movie_dir_name(movie_name, dir_):
 
     if match_ is not None:
         # Format movie name into std format: "My Movie (2015)."
-        return sub(r'''[._]+|\s+''', " ", match_[0]) + " (" + match_[1] + ")"
+        return sub(r'[._]+|\s+', " ", match_[0]) + " (" + match_[1] + ")"
     else:
         # Return the inputted name in case of pattern matching would fail.
         return movie_name
@@ -493,7 +518,7 @@ def _find_movie_name_year_match(dir_):
 
 def _get_movie_name_year_match(movie_name):
     """ Returns a tuple with name and year or None if not found. """
-    match_std = match(r'''(?i)(.*)\W[\[(]?(\d{4})[\])]?\W''', movie_name)
+    match_std = match(r'(?i)(.*)\W[\[(]?(\d{4})[\])]?\W', movie_name)
     if match_std is not None:
         return match_std.group(1).strip(), match_std.group(2)
     else:
