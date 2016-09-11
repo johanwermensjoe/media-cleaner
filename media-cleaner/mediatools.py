@@ -284,7 +284,9 @@ def _get_season_num(file_):
             return sub("^0+", "", match_.group(2))
         elif match_.group(3) is not None:
             return sub("^0+", "", match_.group(3))
-
+    else:
+        # Assume first season if no markers exists.
+        return "1"	
 
 def _get_episode_num(file_):
     """ Extract the episode number of a file. """
