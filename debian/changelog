@@ -1,3 +1,10 @@
+media-cleaner (1.7-0ppa1) xenial; urgency=low
+
+  * Added self correction for invalid tv-series names.
+  * Imported Upstream version 1.7
+
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Fri, 16 Sep 2016 20:25:27 +0200
+
 media-cleaner (1.6-0ppa1) xenial; urgency=low
 
   * Updated bash-completion to include all options.
