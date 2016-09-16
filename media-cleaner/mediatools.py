@@ -3,7 +3,7 @@ mediatools module:
 Contains various media and io functions.
 """
 
-from os import path, listdir, walk, rename, remove, rmdir, makedirs
+from os import path, listdir, walk, renames, remove, rmdir, replace
 from re import match, search, sub
 import rarfile
 from rarfile import RarFile
@@ -54,10 +54,9 @@ def clean_movie(flags, root_dir):
 
         # Update path in case directory has been renamed or the file moved.
         if not flags[Flag.SAFEMODE]:
-            # Update the current directory path.
             movie_name = cleaned_movie_name
 
-        # Set the movie to walk through.
+        # Update the current directory path.
         current_dir = path.join(root_dir, movie_name)
 
         # Check that movie is in a directory.
@@ -97,9 +96,25 @@ def clean_tv(flags, root_dir):
     op_counter = _extract_and_clean_archives(flags, root_dir)
 
     # Sort and cleanup.
-    for series_name in listdir(root_dir):
+    for tv_name in listdir(root_dir):
         # Set the current series to walk through.
-        current_dir = path.join(root_dir, series_name)
+        cleaned_tv_name = _get_clean_tv_dir_name(tv_name,
+                                                 path.join(root_dir, tv_name))
+
+        op_counter = _merge_op_counts(op_counter,
+                                      _move_file_dir(
+                                          flags,
+                                          path.join(root_dir, tv_name),
+                                          path.join(root_dir,
+                                                    cleaned_tv_name),
+                                          "tv-series"))
+
+        # Update path in case directory has been renamed.
+        if not flags[Flag.SAFEMODE]:
+            tv_name = cleaned_tv_name
+
+        # Update the current directory path.
+        current_dir = path.join(root_dir, tv_name)
 
         # If path is a directory, assume it is a proper tv series directory.
         if path.isdir(current_dir):
@@ -113,7 +128,7 @@ def clean_tv(flags, root_dir):
                                                       _clean_tv_main_file(
                                                           flags, current_dir,
                                                           dir_path, file_,
-                                                          series_name))
+                                                          tv_name))
                     else:
                         op_counter = _merge_op_counts(op_counter,
                                                       _clean_other_file(
@@ -221,7 +236,7 @@ def _is_sample_file(file_, path_):
 
 def _is_compressed_file(file_):
     """ Checks if a file is compressed. """
-    match_ = match(r'''.*\.(?:rar|r\d{1,3}|part|part\d{1,3})$''', file_)
+    match_ = match(r'.*\.(?:rar|r\d{1,3}|part|part\d{1,3})$', file_)
     return match_ is not None
 
 
@@ -253,7 +268,7 @@ def _is_proper_main_file(file_):
 
 def _is_valid_media_name(name):
     """ Checks if a media name seems valid. (Not definitive) """
-    return name != "None"
+    return name != "None" and name.strip()
 
 
 def _is_extras_file(file_, path_):
@@ -284,9 +299,7 @@ def _get_season_num(file_):
             return sub("^0+", "", match_.group(2))
         elif match_.group(3) is not None:
             return sub("^0+", "", match_.group(3))
-    else:
-        # Assume first season if no markers exists.
-        return "1"	
+
 
 def _get_episode_num(file_):
     """ Extract the episode number of a file. """
@@ -348,6 +361,8 @@ def _clean_duplicates(flags, dir_path):
 
     return op_counter
 
+
+###################### Tv-series #########################
 
 def _clean_tv_main_file(flags, series_dir, dir_path, file_, series_name):
     """ Clean a main tv-series file. """
@@ -413,25 +428,61 @@ def _get_clean_tv_main_file_name(file_, series_name):
         return file_
 
 
-def _get_clean_tv_dir_name(episode_name):
-    """ Returns a cleaned movie directory name. """
-    match_ = match(
-        r'(?i)(^.*)(?:season|s)\s*(?:\d{1,2})|(?:\d{1,2})\s*x|^(?:\d)\s*\d{2}',
-        episode_name)
-    if match_ is not None:
-        name_year_match = match(r'(?i)(.*)\W[\[(]?(\d{4})[\])]?\W',
-                                match_.group(1))
-        # Format movie name into std format: "My Series", optional year.
-        if name_year_match is not None:
-            return sub(r'[._]+|\s+', " ",
-                       "{} ({})".format(name_year_match.group(1),
-                                        name_year_match.group(2)))
-        else:
-            return sub(r'[._]+|\s+', " ", match_.group(1))
-    else:
-        # Return the inputted name in case of pattern matching would fail.
-        return episode_name
+def _get_clean_tv_dir_name(tv_name, dir_):
+    """ Returns a cleaned tv-series directory name. """
 
+    # If the name might be incorrect, check for possible alts.
+    if not _is_valid_media_name(tv_name):
+
+        match_ = _find_tv_name_year_match(dir_)
+        if match_ is not None:
+
+            # Format movie name into std format: "My Series", optional year.
+            if match_[1] is not None:
+                return sub(r'[._]+|\s+', " ",
+                           "{} ({})".format(match_[0], match_[1]))
+            else:
+                return sub(r'[._]+|\s+', " ", match_[0])
+        else:
+            # Return the inputted name in case of pattern matching would fail.
+            return tv_name.strip()
+    else:
+        return tv_name.strip()
+
+
+def _find_tv_name_year_match(dir_):
+    """ Finds a valid tv-series name in a tv directory, None if no exists. """
+    # Find all possible files and directories to check.
+    names_to_check = []
+    for _, dirs, files in walk(dir_):
+        names_to_check += files
+        names_to_check += dirs
+
+    # Test all names.
+    for name in names_to_check:
+        match_ = _get_tv_file_name_year_match(name)
+        if match_ is not None and _is_valid_media_name(match_[0]):
+            return match_
+    return None
+
+
+def _get_tv_file_name_year_match(tv_name):
+    """ Returns a tuple with tv-series name and year or None if not found. """
+    match_ = match(r'(?i)(^.+?)\W+(?:season|s)\s*(?:\d{1,2})'
+                   r'|(?:\d{1,2})\s*x|^(?:\d)\s*\d{2}', tv_name)
+    if match_ is not None:
+        name_year_match = match(r'(?i)(^.+?)\W+[\[(]?(\d{4})[\])]?\W',
+                                match_.group(1))
+        if name_year_match is not None:
+            return name_year_match.group(1).strip(), \
+                   name_year_match.group(2)
+        else:
+            return match_.group(1).strip(), None
+    else:
+        return None
+
+
+####################### Movies ###########################
 
 def _clean_movie_main_file(flags, dir_path, file_, movie_dir, movie_name):
     """ Clean a main movie file. """
@@ -461,7 +512,7 @@ def _get_clean_movie_main_file_name(file_, movie_name):
         Relies on names formatted in std movie dir format:
         - "My Movie (2015)".
     """
-    name_year_match = match(r'(?i)(.*)\s[(](\d{4})[)]$', movie_name)
+    name_year_match = match(r'(?i)(^.+)\s[(](\d{4})[)]$', movie_name)
     # Extract quality string from file name.
     quality_match = search(
         r'(?i)(?:\W[\[(]?\d{4}[\])]?\W)(.*)\..{1,4}$', file_)
@@ -496,10 +547,10 @@ def _get_clean_movie_dir_name(movie_name, dir_):
 
     if match_ is not None:
         # Format movie name into std format: "My Movie (2015)."
-        return sub(r'[._]+|\s+', " ", match_[0]) + " (" + match_[1] + ")"
+        return "{} ({})".format(sub(r'[._]+|\s+', " ", match_[0]), match_[1])
     else:
         # Return the inputted name in case of pattern matching would fail.
-        return movie_name
+        return movie_name.strip()
 
 
 def _find_movie_name_year_match(dir_):
@@ -519,8 +570,8 @@ def _find_movie_name_year_match(dir_):
 
 
 def _get_movie_name_year_match(movie_name):
-    """ Returns a tuple with name and year or None if not found. """
-    match_std = match(r'(?i)(.*)\W[\[(]?(\d{4})[\])]?\W', movie_name)
+    """ Returns a tuple with movie name and year or None if not found. """
+    match_std = match(r'(?i)(.*?)\W+[\[(]?(\d{4})[\])]?\W', movie_name)
     if match_std is not None:
         return match_std.group(1).strip(), match_std.group(2)
     else:
@@ -553,8 +604,9 @@ def _remove_empty_folders(flags, path_, remove_root=True):
             if not flags[Flag.SAFEMODE]:
                 rmdir(path_)
             op_counter = _merge_op_counts(op_counter, {'d_rm': 1})
-        except OSError:
-            log_err(flags, "Error while removing directory: {}".format(path_))
+        except OSError as err:
+            log_err(flags, "Error (OsError: {}) while removing directory: {}".
+                    format(err.errno, path_))
             op_counter = _merge_op_counts(op_counter, {'err': 1})
     return op_counter
 
@@ -569,37 +621,46 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
         new_dir = path.dirname(new_path)
 
         # Check if the file/dir is being moved or just renamed.
-        if old_dir != new_dir:
-            # Move
-            log(flags, "Moving " + file_dir_type +
-                (" file" if path.isfile(old_path) else " directory") +
-                ": " + old_path + "\nTo: " + new_path)
-            op_counter = {('f_m' if path.isfile(old_path) else 'd_m'): 1}
-            if not flags[Flag.SAFEMODE]:
-                try:
-                    # Make sure parent directory exists.
-                    if not path.isdir(new_dir):
-                        makedirs(new_dir)
-                except OSError:
-                    log_err(flags, "Error while moving file/directory: {}".
-                            format(old_path))
+        if path.isfile(old_path):
+            # File
+            log(flags, "{} {} file: {}\nTo: {}".
+                format("Moving" if old_dir != new_dir else "Renaming",
+                       file_dir_type, old_path, new_path))
+            op_counter = {('f_m' if old_dir != new_dir else 'f_r'): 1}
         else:
-            # Rename
-            log(flags, "Renaming " + file_dir_type +
-                (" file" if path.isfile(old_path) else " directory") +
-                ": " + old_path + "\nTo: " + new_path)
-            op_counter = {('f_r' if path.isfile(old_path) else 'd_r'): 1}
+            # Directory
+            if path.isdir(new_path):
+                # Merge directories.
+                log(flags, "Merging {} directory: {}\nInto: {}".
+                    format(file_dir_type, old_path, new_path))
+                op_counter = {'d_me': 1}
+            else:
+                # Move directory.
+                log(flags, "Moving {} directory: {}\nTo: {}".
+                    format(file_dir_type, old_path, new_path))
+                op_counter = {'d_m': 1}
+
+        # Do the move/rename.
         if not flags[Flag.SAFEMODE]:
             try:
                 # If only case has been changed do temp move (Samba comp).
                 if old_path.lower() == new_path.lower():
-                    rename(old_path, old_path + "_temp")
+                    renames(old_path, old_path + "_temp")
                     old_path += "_temp"
                 # Do the move/rename.
-                rename(old_path, new_path)
-            except OSError:
-                log_err(flags, "Error while renaming file/directory: {}".
-                        format(old_path))
+                if path.isdir(old_path) and path.isdir(new_path):
+                    # Target and source are existing directories, do a merge.
+                    _merge_dirs(old_path, new_path)
+                elif path.isfile(old_path) and path.isfile(new_path):
+                    # Target and source are existing files, overwrite.
+                    replace(old_path, new_path)
+                else:
+                    # Do a standard move/rename.
+                    renames(old_path, new_path)
+            except OSError as err:
+                log_err(flags,
+                        "Error (OsError: {}) while moving file/directory: {}".
+                        format(err.errno, old_path))
                 op_counter = {'err': 1}
     return op_counter
 
@@ -613,10 +674,24 @@ def _remove_file(flags, dir_path, file_, file_type=None):
         if not flags[Flag.SAFEMODE]:
             remove(path.join(dir_path, file_))
         return {'f_rm': 1}
-    except OSError:
-        log_err(flags, "Error while removing file: {}".
-                format(path.join(dir_path, file_)))
+    except OSError as err:
+        log_err(flags, "Error (OsError: {}) while removing file: {}".
+                format(err.errno, path.join(dir_path, file_)))
         return {'err': 1}
+
+
+def _merge_dirs(root_src_dir, root_dst_dir, overwrite=False):
+    """ Merges two directories. """
+    for src_dir, _, files in walk(root_src_dir):
+        dst_dir = src_dir.replace(root_src_dir, root_dst_dir, 1)
+        for file_ in files:
+            src_file = path.join(src_dir, file_)
+            dst_file = path.join(dst_dir, file_)
+            if path.isfile(dst_file):
+                if overwrite:
+                    replace(dst_file, src_file)
+            else:
+                renames(src_file, dst_file)
 
 
 ##########################################################
@@ -656,7 +731,7 @@ def _extract_rar(flags, dir_path, main_file):
                 r_file.extractall(dir_path)
         return {'a_e': 1}
     except rarfile.Error:
-        log_err(flags, "Error while extracting archive: {}".
+        log_err(flags, "Error (rarfile.Error) while extracting archive: {}".
                 format(path.join(dir_path, main_file)))
         return {'err': 1}
 
@@ -671,9 +746,9 @@ def _remove_archive(flags, dir_path, main_file):
                 if not flags[Flag.SAFEMODE]:
                     remove(path.join(dir_path, file_))
                 return {'f_rm': 1}
-            except OSError:
-                log_err(flags, "Error while removing archive: {}".
-                        format(path.join(dir_path, main_file)))
+            except OSError as err:
+                log_err(flags, "Error (OsError: {}) while removing archive: {}".
+                        format(err.errno, path.join(dir_path, main_file)))
                 return {'err': 1}
     return {}
 
@@ -691,6 +766,7 @@ _OP_KEYS = ['a_e',
             'd_rm',
             'd_r',
             'd_m',
+            'd_me',
             'err']
 
 _OP_VALUES = ["Archive extraction",
@@ -700,6 +776,7 @@ _OP_VALUES = ["Archive extraction",
               "Directory remove",
               "Directory rename",
               "Directory move",
+              "Directory merge",
               "Error"]
 
 
