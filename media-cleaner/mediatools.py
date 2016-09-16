@@ -367,34 +367,26 @@ def _clean_duplicates(flags, dir_path):
 def _clean_tv_main_file(flags, series_dir, dir_path, file_, series_name):
     """ Clean a main tv-series file. """
     # Make proper path.
-    proper_path = path.join(
-        path.join(series_dir,
-                  "Season " + _get_season_num(file_)),
-        "{} S{}E{}".format(series_name,
-                           _get_season_num(file_).zfill(2),
-                           _get_episode_num(file_).zfill(2)))
+    proper_path = path.join(series_dir,
+                            "Season {}".format(_get_season_num(file_)),
+                            "{} S{}E{}".
+                            format(series_name,
+                                   _get_season_num(file_).zfill(2),
+                                   _get_episode_num(file_).zfill(2)))
 
-    # Try to move the video file to the correct location.
+    # Get a clean file name.
+    cleaned_file_name = _get_clean_tv_main_file_name(file_, series_name)
+
+    # Try to move the video file to the correct location and name.
     op_counter = _move_file_dir(flags, path.join(dir_path, file_),
-                                path.join(proper_path, file_),
+                                path.join(proper_path, cleaned_file_name),
                                 _get_main_file_type(file_))
-    # Clean tv main file name.
-    op_counter = _merge_op_counts(op_counter,
-                                  _clean_tv_main_file_name(flags, proper_path,
-                                                           file_, series_name))
 
     return op_counter
 
 
-def _clean_tv_main_file_name(flags, dir_path, file_, series_name):
-    """ Clean a main tv-series file name. """
-    return _move_file_dir(flags, path.join(dir_path, file_),
-                          path.join(dir_path, _get_clean_tv_main_file_name(
-                              file_, series_name)), _get_main_file_type(file_))
-
-
 def _get_clean_tv_main_file_name(file_, series_name):
-    """ Returns a cleaned a main tv-serie file name. """
+    """ Returns a cleaned a main tv-series file name. """
     if _has_markers(file_):
         # Create episode id.
         episode_id = series_name.replace(" ", ".") + ".S" + \
@@ -474,8 +466,7 @@ def _get_tv_file_name_year_match(tv_name):
         name_year_match = match(r'(?i)(^.+?)\W+[\[(]?(\d{4})[\])]?\W',
                                 match_.group(1))
         if name_year_match is not None:
-            return name_year_match.group(1).strip(), \
-                   name_year_match.group(2)
+            return name_year_match.group(1).strip(), name_year_match.group(2)
         else:
             return match_.group(1).strip(), None
     else:
@@ -486,25 +477,14 @@ def _get_tv_file_name_year_match(tv_name):
 
 def _clean_movie_main_file(flags, dir_path, file_, movie_dir, movie_name):
     """ Clean a main movie file. """
-    # Try to move the video file to the correct location.
+    # Get a clean file name.
+    clean_movie_name = _get_clean_movie_main_file_name(file_, movie_name)
+
+    # Try to move the video file to the correct location and name.
     op_counter = _move_file_dir(flags, path.join(dir_path, file_),
-                                path.join(movie_dir, file_),
+                                path.join(movie_dir, clean_movie_name),
                                 _get_main_file_type(file_))
-    # Clean tv main file name.
-    op_counter = _merge_op_counts(op_counter,
-                                  _clean_movie_main_file_name(flags, movie_dir,
-                                                              file_,
-                                                              movie_name))
     return op_counter
-
-
-def _clean_movie_main_file_name(flags, dir_path, file_, movie_name):
-    """ Clean a main movie file name. """
-    return _move_file_dir(flags, path.join(dir_path, file_),
-                          path.join(dir_path,
-                                    _get_clean_movie_main_file_name(
-                                        file_, movie_name)),
-                          _get_main_file_type(file_))
 
 
 def _get_clean_movie_main_file_name(file_, movie_name):
@@ -627,7 +607,7 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
                 format("Moving" if old_dir != new_dir else "Renaming",
                        file_dir_type, old_path, new_path))
             op_counter = {('f_m' if old_dir != new_dir else 'f_r'): 1}
-        else:
+        elif path.isdir(old_path):
             # Directory
             if path.isdir(new_path):
                 # Merge directories.
@@ -639,6 +619,11 @@ def _move_file_dir(flags, old_path, new_path, file_dir_type):
                 log(flags, "Moving {} directory: {}\nTo: {}".
                     format(file_dir_type, old_path, new_path))
                 op_counter = {'d_m': 1}
+        else:
+            # The source file/directory does not exist.
+            log_err(flags, "Error (Source does not exist) " +
+                    "while moving file/directory: {}".format(old_path))
+            op_counter = {'err': 1}
 
         # Do the move/rename.
         if not flags[Flag.SAFEMODE]:
