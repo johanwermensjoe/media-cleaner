@@ -304,7 +304,7 @@ def _get_season_num(file_):
 def _get_episode_num(file_):
     """ Extract the episode number of a file. """
     # Check standard pattern S01E01
-    match_ = search(r'(?i)(?:episode|x|e)\s*(\d{1,2})|^\d(\d{2})', file_)
+    match_ = search(r'(?i)(?:episode|x|e)\s*(\d{1,3})|^\d(\d{2})', file_)
     if match_ is not None:
         if match_.group(1) is not None:
             return sub("^0+", "", match_.group(1))
