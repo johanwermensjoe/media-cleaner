@@ -1,3 +1,10 @@
+media-cleaner (1.8-0ppa1) xenial; urgency=low
+
+  * Added support for three digit tv episode numbers.
+  * Imported Upstream version 1.8
+
+ -- Johan Wermensjö <johanwermensjoe@gmail.com>  Sat, 03 Jun 2017 03:25:31 +0200
+
 media-cleaner (1.7-0ppa1) xenial; urgency=low
 
   * Added self correction for invalid tv-series names.
